@@ -45,11 +45,11 @@ class GridProperty:
         Parameters
         ----------
         name : GridPropertyName
-            The name of the disk property.
+            The name of the grid property.
         unit : GridPropertyUnit
-            The unit of the disk property.
+            The unit of the grid property.
         data : np.ndarray (float)
-            The disk property data.
+            The grid property data.
         grid_parameters : GridParameters
             The vectors that define each dimension of the data cube.
         """
@@ -80,7 +80,7 @@ class GridProperty:
         Returns
         -------
         str_string : str
-            Representation string for disk property class.
+            Representation string for grid property class.
         """
         data_shape = str(self.data.shape)
         str_string = self.__repr__() + f" with size {data_shape}"
@@ -135,7 +135,7 @@ class GridProperty:
         Returns
         -------
         data : np.ndarray (float)
-            The disk property data.
+            The grid property data.
         """
         masked = validate.boolean(masked, 'masked')
         data = self.data
@@ -199,7 +199,8 @@ class GridProperty:
             masked: bool = True
         ) -> None:
         """
-        This method plots the value data cube.
+        This method plots the values of the data cube in a scrollable grid
+        property viewer.
 
         Parameters
         ----------
@@ -226,9 +227,7 @@ class GridProperty:
             masked: bool = True
         ) -> tuple[plt.Axes, AxesImage]:
         '''
-        This method allows you to plot a slice from the sjalot explorer cubes.
-        It is designed to work with diskRadius, inclination, tilt and 
-        gradients.
+        This method plots a single slice from a fixed grid property viewer.
 
         Parameters
         ----------
@@ -348,7 +347,7 @@ class GridGradient(GridProperty):
         Parameters
         ----------
         data : np.ndarray (float)
-            The disk property data.
+            The grid property data.
         grid_parameters : GridParameters
             The vectors that define each dimension of the data cube.
         position : float
@@ -363,8 +362,56 @@ class GridGradient(GridProperty):
         
         self.position = validate.number(position, 'position')
         self.measured_gradient = None
+        self.orbital_scale: float = None
+        self.transmission_change: float = None
 
-    def determine_mask(self, measured_gradient: float) -> None:
+    def __str__(self) -> str:
+        """
+        This produces a string representation for the user. Overridden to
+        include mask parameters.
+        
+        Returns
+        -------
+        str_string : str
+            Representation string for grid property class.
+        """
+        data_shape = str(self.data.shape)
+        str_string = self.__repr__() + f" with size {data_shape}"
+
+        if self.mask is not None:
+            str_string = str_string + " -> mask available\n"
+            
+            measured = f' measured gradient: {self.measured_gradient:.2f}\n'
+            orbital = f' orbital scale: {self.orbital_scale:.2f}\n'
+            transmission = f' transmission change: {self.transmission_change}'
+            
+            str_string = str_string + measured + orbital + transmission
+
+        return str_string
+
+    def __repr__(self) -> str:
+        """
+        This generates a string representation that combines the name
+        and the unit with the position. This is overriden to include
+        the position of the grid gradient.
+        
+        Returns
+        -------
+        repr_string : str
+            This is the name and unit of the grid gradient.
+        """
+        name = self.name.get_name()
+        unit = self.unit.get_unit()
+        repr_string = f"{name} [{unit}] @ position = {self.position}"
+
+        return repr_string
+
+
+    def determine_mask(self, 
+            measured_gradient: float,
+            orbital_scale: float,
+            transmission_change : float = None
+        ) -> None:
         """
         This method is used to determine the mask based on the appropriately
         scaled, measured gradient.
@@ -374,11 +421,29 @@ class GridGradient(GridProperty):
         measured_gradient : float
             This value is the measured light curve gradient at this particular
             position.
+        orbital_scale : float
+            This value is used to scale the measured gradient by some scale
+            factor that depends on the transverse velocity of the occulter and
+            the limb darkening parameter of the star.
+        transmission_change : float
+            This value scales the measured gradient by the change in 
+            transmission over the gradient. If unknown use `1`, if unsure then
+            use an upper limit.
         """
         self.measured_gradient = validate.number(measured_gradient, 
             'measured_gradient', lower_bound=0, upper_bound=1)
+        
+        self.orbital_scale = validate.number(orbital_scale, 
+            'orbital_scale', lower_bound=0)
+        
+        if transmission_change is None:
+            transmission_change = 1
+        self.transmission_change = validate.number(transmission_change, 
+            'transmission_change', lower_bound=0, upper_bound=1)
+        transmission_scale = 1 / self.transmission_change
 
-        self.mask = self.measured_gradient > self.data
+        total_scale = self.orbital_scale * transmission_scale
+        self.mask = total_scale * self.measured_gradient > self.data
 
     def save_gradient(self, directory: str) -> None:
         """
@@ -401,8 +466,9 @@ class GridGradient(GridProperty):
         np.save(f'{gradient_directory}/position', np.array([self.position]))
 
         if self.measured_gradient is not None:
-            np.save(f'{gradient_directory}/measured_gradient', 
-                np.array([self.measured_gradient]))
+            mask_values = np.array([self.measured_gradient, 
+                self.gradient_scale, self.transmission_scale])
+            np.save(f'{gradient_directory}/mask_values', mask_values)
         
         self.grid_parameters.save(directory)
 
@@ -434,10 +500,10 @@ class GridGradient(GridProperty):
             
             grid_gradient = cls(data, grid_parameters, position)
             
-            filepath_measured_gradient = f'{directory}/measured_gradient.npy'
-            if os.path.exists(filepath_measured_gradient):
-                measured_gradient = np.load(filepath_measured_gradient)[0]
-                grid_gradient.determine_mask(measured_gradient)
+            filepath_mask_values = f'{directory}/mask_values.npy'
+            if os.path.exists(filepath_mask_values):
+                mask_values = np.load(filepath_mask_values)
+                grid_gradient.determine_mask(*mask_values)
 
         except Exception:
             type_string = f'{name.get_name()} [{unit.__str__()}]'

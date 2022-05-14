@@ -1210,10 +1210,10 @@ class ShallotGrid:
             self.gradients.append(GridGradient(disk_gradient, 
                 self.parameters, position))
 
-    def _set_light_curve_gradient_scale(self, 
+    def _determine_orbital_scale(self, 
             transverse_velocity: float, 
             limb_darkening: float
-        ) -> None:
+        ) -> float:
         '''
         This method is used to set a light curve gradient scale factor that is
         dependent on the transverse velocity of the occulting object and the
@@ -1221,12 +1221,19 @@ class ShallotGrid:
         
         Parameters
         ----------
-        transverseVelocity : float
+        transverse_velocity : float
             This is the velocity of the disk, which can be determined from the
             light curve or by other means [R*/day].
-        limbDarkening : float
+        limb_darkening : float
             This is the parameter that defines the limb darkening according to
             the linear limb darkening law [-].
+
+        Return
+        ------
+        orbital_scale : float
+            This is the scale factor that is generated depending on the input
+            transverse velocity of the occulter and the limb darkening of the
+            star.
         '''
         # validate
         transverse_velocity = validate.number(transverse_velocity, 
@@ -1239,18 +1246,31 @@ class ShallotGrid:
             (12 - 12 * limb_darkening + 3 * np.pi * limb_darkening))
         velocity_scale = np.pi / transverse_velocity
 
-        self._light_curve_gradient_scale = limb_darkening_scale * velocity_scale
+        orbital_scale = limb_darkening_scale * velocity_scale
+        return orbital_scale
 
-    def _set_transmission_change_scale(self, 
-            transmission_changes: np.ndarray
+    def _set_measured_gradients_and_masks(self, 
+            light_curve_gradients: np.ndarray,
+            transverse_velocity: float,
+            limb_darkening: float,
+            transmission_changes: np.ndarray = None
         ) -> None:
         '''
-        This method is used to scale the light curve gradients to disk 
-        gradients based on the transmission change exhibited during a light
-        curve gradient.
+        This method is used to convert the gradients measured in a light curve
+        [L*/t_ecl] into the disk gradients, so that they can be compared to the 
+        theoretical disk gradients determined by .determineDiskGradients() 
+        method. 
 
         Parameters
         ----------
+        light_curve_gradients : np.ndarray (float 1-D)
+            Gradients measured from the light curve [L*/day].
+        transverse_velocity : float
+            This is the velocity of the disk, which can be determined from the
+            light curve or by other means [R*/day].
+        limb_darkening : float
+            This is the parameter that defines the limb darkening according to
+            the linear limb darkening law [-].
         transmission_changes : np.ndarray (float 1-D)
             Contains the full change in transmission over the course of the 
             measured gradient (see notes).
@@ -1270,29 +1290,25 @@ class ShallotGrid:
         The above two points are to prevent over compensation of the gradients
         that will remove potential viable solutions for the light curve fit.
         '''
-        self._transmission_change_scale = 1 / transmission_changes
+        if transmission_changes is None:
+            transmission_changes = np.ones_like(light_curve_gradients)
+        transmission_changes = validate.array(transmission_changes, 
+            'transmission_changes', lower_bound=0, upper_bound=1, 
+            dtype='float64', num_dimensions=1)
+        
+        arrays_list = [light_curve_gradients, transmission_changes]
+        names_list = ['light_curve_gradients', 'transmission_changes']
+        validate.same_shape_arrays(arrays_list, names_list)
 
-    def _set_measured_gradients_and_masks(self, 
-            light_curve_gradients: np.ndarray
-        ) -> None:
-        '''
-        This method is used to convert the gradients measured in a light curve
-        [L*/t_ecl] into the disk gradients, so that they can be compared to the 
-        theoretical disk gradients determined by .determineDiskGradients() 
-        method. 
+        orbital_scale = self._determine_orbital_scale(transverse_velocity, 
+            limb_darkening)
+        
+        measured_gradients = np.abs(light_curve_gradients)
 
-        Parameters
-        ----------
-        light_curve_gradients : np.ndarray (float 1-D)
-            Gradients measured from the light curve [L*/day].
-        '''
-        scale = (self._light_curve_gradient_scale * 
-            self._transmission_change_scale)
-
-        measured_gradients = np.abs(scale * light_curve_gradients)
-
-        for k, measured_gradient in enumerate(measured_gradients):
-            self.gradients[k].determine_mask(measured_gradient)
+        for gradient, measured_gradient, transmission_change in zip(
+                self.gradients, measured_gradients, transmission_changes):
+            gradient.determine_mask(measured_gradient, orbital_scale,
+                transmission_change)
 
     def determine_gradients(self, 
             times: np.ndarray, 
@@ -1305,8 +1321,8 @@ class ShallotGrid:
         '''
         This method is used to convert the gradients measured in a light curve
         [L*/t_ecl] into the right form to be compared with the theoretical
-        gradients determined by .determineGradients() method. To do this other
-        astrophysical parameters are required.
+        gradients determined by .determine_gradients() method. To do this 
+        other astrophysical parameters are required.
 
         Parameters
         ----------
@@ -1350,26 +1366,19 @@ class ShallotGrid:
         light_curve_gradients = validate.array(light_curve_gradients, 
             'light_curve_gradients', lower_bound=0., upper_bound=1., 
             num_dimensions=1, dtype='float64')
-        
-        if transmission_changes is None:
-            transmission_changes = np.ones_like(light_curve_gradients)
-        transmission_changes = validate.array(transmission_changes, 
-            'transmission_changes', lower_bound=-1., upper_bound=1., 
-            dtype='float64', num_dimensions=1)
-        
-        arrays_list = [times, light_curve_gradients, transmission_changes]
-        names_list = ['times', 'light_curve_gradients', 'transmission_changes']
+               
+        arrays_list = [times, light_curve_gradients]
+        names_list = ['times', 'light_curve_gradients']
         validate.same_shape_arrays(arrays_list, names_list)
 
         # convert gradients
         positions = -times / eclipse_duration
         self._determine_disk_gradients(positions)
 
-        self._set_light_curve_gradient_scale(transverse_velocity, limb_darkening)
-        self._set_transmission_change_scale(transmission_changes)
-        self._set_measured_gradients_and_masks(light_curve_gradients)
+        self._set_measured_gradients_and_masks(light_curve_gradients, 
+            transverse_velocity, limb_darkening, transmission_changes)
 
-    def update_measured_gradients_scaling(self, 
+    def update_gradient_scaling(self, 
             transverse_velocity: float = None, 
             limb_darkening: float = None, 
             transmission_changes: np.ndarray = None
@@ -1408,46 +1417,49 @@ class ShallotGrid:
         The above two points are to prevent over compensation of the gradients
         that will remove potential viable solutions for the light curve fit.
         '''
-        # get necessary params
-        scale = (self._light_curve_gradient_scale * 
-            self._transmission_change_scale)
-        
-        light_curve_gradients = np.zeros(len(self.gradients))
-        for k in range(len(self.gradients)):
-            light_curve_gradients[k] = (self.gradients[k].measured_gradient / 
-                scale)
-
-        # update light curve gradient scale
-        if (transverse_velocity is not None) and (limb_darkening is not None): 
-            # set scale factor
-            self._set_light_curve_gradient_scale(transverse_velocity, 
-                limb_darkening)
+        # update orbital scale
+        update_orbital_scale = False
+        if (transverse_velocity is not None) and (limb_darkening is not None):
+            update_orbital_scale = True
         elif (transverse_velocity is None) and (limb_darkening is None):
-            #  light curve scale factor ignored
+            # orbital scale purposefully ignored
             pass
         else:
-            # light curve scale factor ignored because of missing parameter
-            self.logger.warning('light curve gradient scale not updated '
-                'because both transverse_velocity and limb_darkening must '
-                'be provided')
+            # orbital scale ignored because of missing parameter
+            self.logger.warning('orbital scale has not been updated because'
+                'both transverse_velocity and limb_darkening must be given')
 
         # update transmission change scale
+        update_transmission_change = False
         if transmission_changes is not None:
-            # validate
             transmission_changes = validate.array(transmission_changes, 
                 'transmission_changes', dtype='float64', num_dimensions=1, 
                 lower_bound=-1, upper_bound=1)
 
-            arrays_list = [transmission_changes, 
-                self._transmission_change_scale]
-            names_list = ['transmission_changes', 'transmission_change_scale']
+            arrays_list = [transmission_changes, np.array(self.gradients)]
+            names_list = ['transmission_changes', 'gradients']
             validate.same_shape_arrays(arrays_list, names_list)
+            
+            update_transmission_change = True
+        
+        for k, gradient in enumerate(self.gradients):
+            # select orbital scale
+            if update_orbital_scale:
+                orbital_scale = self._determine_orbital_scale(transverse_velocity, 
+                    limb_darkening)
+            else:
+                orbital_scale = gradient.orbital_scale
 
-            self._set_transmission_change_scale(transmission_changes)
+            # select transmission scale
+            if update_transmission_change:
+                transmission_change = transmission_changes[k]
+            else:
+                transmission_change = gradient.transmission_change
 
-        # update measured gradients and masks
-        self._set_measured_gradients_and_masks(light_curve_gradients)
-
+            # update mask
+            gradient.determine_mask(gradient.measured_gradient, orbital_scale, 
+                transmission_change)
+        
     def get_gradients(self, 
             gradient_masked: bool = True
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -1636,7 +1648,7 @@ class ShallotGrid:
 
         return closest_coordinates, closest_indices, minimum_distance
 
-    def get_information_from_grid_point(self, 
+    def get_grid_point_data(self, 
             y_index: int, 
             x_index: int, 
             rf_index: int
@@ -1663,18 +1675,18 @@ class ShallotGrid:
 
         Returns
         -------
-        disk_information : tuple (float 5)
+        disk_data : tuple (float 5)
             disk_radius : float [t_ecl]
             inclination : float [deg]
             tilt : float [deg]
             dx : float [t_ecl]
             dy : float [t_ecl]
-        grid_information : tuple (float 4)
+        grid_data : tuple (float 4)
             rf : float [-]
             fx : float [-]
             fy : float [-]
             diagnostic : float [t_ecl]
-        gradient_information : tuple (np.ndarray 2)
+        gradient_data : tuple (np.ndarray 2)
             positions : np.ndarray (float 1-D) [t_ecl]
             gradients : np.ndarray (float 1-D) [-]
         """
@@ -1693,14 +1705,14 @@ class ShallotGrid:
         tilt = self.tilt.data[y_index, x_index, rf_index]
         dx = self.parameters.dx.flatten()[x_index]
         dy = self.parameters.dy.flatten()[y_index]
-        disk_information = (disk_radius, inclination, tilt, dx, dy)
+        disk_data = (disk_radius, inclination, tilt, dx, dy)
 
         # grid information
         rf = self.parameters.rf_array[rf_index]
         fx = self.fx_map.data[y_index, x_index, rf_index]
         fy = self.fy_map.data[y_index, x_index, rf_index]
         diagnostic = self.diagnostic_map.data[y_index, x_index, rf_index]
-        grid_information = (rf, fx, fy, diagnostic)
+        grid_data = (rf, fx, fy, diagnostic)
 
         # gradient information
         if self.gradients is not None:
@@ -1712,6 +1724,6 @@ class ShallotGrid:
         else:
             positions = None
             gradients = None
-        gradient_information = (positions, gradients)
+        gradient_data = (positions, gradients)
 
-        return disk_information, grid_information, gradient_information
+        return disk_data, grid_data, gradient_data
