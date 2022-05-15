@@ -115,43 +115,43 @@ class ShallotGrid:
         
         Returns
         -------
-        print_shallot_grid_class : str
-            Information about the shallot grid.
+        str_string : str
+            String representation of the shallot grid.
         '''
         # get resolution diagnostic values
         resolution_diagnostic = self.diagnostic_map.data
         max_deviation = np.nanmax(np.abs(resolution_diagnostic))
 
-        # get number percentage value
-        disk_radius = self.get_disk_radius(masked=True)
-        numbers = np.sum(~np.isnan(disk_radius))
-        total_nums = np.prod(self.parameters.grid_shape)
-        num_percentage = 100 * numbers / total_nums
+        # get total masked percentage
+        total_mask = self.get_combined_mask()
+        fraction_masked = np.sum(total_mask) / np.prod(total_mask.shape)
+        percentage_masked = f"{100 * fraction_masked:.2f}%"
 
         # print information
-        lines = []
-        lines.append('\n==========================================')
+        lines: list[str] = ['']
+        lines.append('==========================================')
         lines.append('******** SHALLOT GRID INFORMATION ********')
         lines.append('==========================================')
         lines.append(self.parameters.__str__())
-        if self.gradients is None:
-            lines.append('gradients : none')
-        else:
-            lines.append(f'gradients : {len(self.gradients)}')
-        lines.append('\nGrid Information')
-        lines.append('----------------')
-        lines.append(f'number percentage (non NaN\'s) : {num_percentage:.2f}')
-        lines.append(f'worst interpolation fit : {max_deviation:.9f}')
-        if self.diagnostics is None:
-            lines.append('full diagnostics are unavailable')
-        else:
-            lines.append('full diagnostics are available')
-        lines.append('\n==========================================')
+        lines.append(self.disk_radius.__repr__())
+        lines.append(self.tilt.__repr__())
+        lines.append(self.inclination.__repr__())
+        if self.gradients is not None:
+            for gradient in self.gradients:
+                lines.append(gradient.__repr__())
+        if self.diagnostics is not None:
+            lines.append(self.diagnostics.__repr__())
+        lines.append('')
+        lines.append('Grid Information')
+        lines.append(28 * '-')
+        lines.append(f"percentage masked: {percentage_masked}")
+        lines.append(f"worst interpolation fit: {max_deviation:.9f}")
+        lines.append('')
+        lines.append('==========================================')
 
-        # join to create a single string
-        print_shallot_grid_class = "\n".join(lines)
-
-        return print_shallot_grid_class
+        # create str string
+        str_string = "\n".join(lines)
+        return str_string
 
     def save(self, directory: str, y_value: int = None) -> None:
         """
@@ -1533,8 +1533,9 @@ class ShallotGrid:
         # retrieve masks
         all_masks = [self.disk_radius.mask, self.inclination.mask, 
             self.tilt.mask]
-        for gradient in self.gradients:
-            all_masks.append(gradient.mask)
+        if self.gradients is not None:
+            for gradient in self.gradients:
+                all_masks.append(gradient.mask)
         
         # generate combined mask
         combined_mask = np.zeros(self.parameters.grid_shape)
