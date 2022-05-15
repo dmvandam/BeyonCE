@@ -233,6 +233,7 @@ class GridProperty:
         fig, ax = plt.subplots()
         viewer = GridPropertyViewer(ax, axis, self, masked, 
             coordinates=coordinates)
+        print(viewer)
         fig.canvas.mpl_connect('scroll_event', viewer.onscroll)
         plt.colorbar(viewer.image)
         plt.show()
@@ -578,7 +579,9 @@ class GridPropertyViewer:
         self.slice_name = ['$y$', '$x$', '$R_f$'][axis]
         
         
-        self.property_name = grid_property.__repr__()
+        property_name = f"{grid_property.name.get_name()}"
+        property_unit = f"{grid_property.unit.get_unit()}" 
+        self.title_prefix = f"{property_name} [{property_unit}]"
             
         self.update_title()
         self.set_labels()
@@ -633,7 +636,7 @@ class GridPropertyViewer:
         """
         This method generates the title of the given slice
         """
-        title = (f'{self.property_name} - {self.slice_name} = '
+        title = (f'{self.title_prefix} - {self.slice_name} = '
             f'{self.slice_values[self.index]:.4f}')
         
         if self.axis == 2: 
