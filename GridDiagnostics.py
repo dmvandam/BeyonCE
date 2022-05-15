@@ -18,6 +18,37 @@ class GridDiagnostics:
         self.fy_dict = {}
         self.disk_radius_dict = {}
 
+    def __str__(self) -> str:
+        """
+        This method returns a representation string of the grid diagnostics
+        class.
+
+        Returns
+        -------
+        str_string : str
+            Representation string of the grid diagnostics class.
+        """
+        str_string = self.__repr__()
+        return str_string
+
+    def __repr__(self) -> str:
+        """
+        This method returns a representation string of the grid diagnostics
+        class.
+
+        Returns
+        -------
+        repr_string : str
+            Representation string of the grid diagnostics class.
+        """
+        lines: list[str] = ['']
+        lines.append('Grid Diagnostics')
+        lines.append(28 * '-')
+        lines.append(f'diagnostics saved: {len(self.fy_dict.keys())}')
+        
+        repr_string = "\n".join(lines)
+        return repr_string
+
     def get_diagnostic(self, key: str) -> tuple[np.ndarray, np.ndarray]:
         """
         This method is used to extract the diagnostic values from each 

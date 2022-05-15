@@ -15,6 +15,7 @@ from GridParameters import GridParameters
 from GridPropertyName import GridPropertyName
 from GridPropertyUnit import GridPropertyUnit
 
+
 class GridProperty:
     """
     This class is used to define the following grid properties:
@@ -75,35 +76,51 @@ class GridProperty:
 
     def __str__(self) -> str:
         """
-        This produces a string representation for the user.
+        This produces a string representation for the user. It includes
+        the grid parameters str representation.
         
         Returns
         -------
         str_string : str
             Representation string for grid property class.
         """
-        data_shape = str(self.data.shape)
-        str_string = self.__repr__() + f" with size {data_shape}"
-
-        if self.mask is not None:
-            str_string = str_string + " -> mask available"
-
+        lines = self.__repr__().split('\n')
+        lines.append(self.grid_parameters.__str__())
+        
+        str_string = "\n".join(lines)
         return str_string
 
     def __repr__(self):
         """
-        This generates a string representation that combines the name
-        and the unit.
+        This generates a string representation of the grid gradient. 
         
         Returns
         -------
         repr_string : str
-            This is the name and unit of the grid property.
+            Representation string of the grid property class. This ignores
+            the grid parameters object.
         """
-        name = self.name.get_name()
-        unit = self.unit.get_unit()
-        repr_string = f"{name} [{unit}]"
+        lines: list[str] = ['']
+        parameter = f"{self.name.get_name()} [{self.unit.get_unit()}]"
 
+        lines.append(parameter)
+        lines.append(28 * "-")
+        min_value_string = f"{self.vmin:.4f}".rjust(13)
+        max_value_string = f"{self.vmax:.4f}".rjust(13)
+        mean_value_string = f"{np.nanmean(self.data):.4f}".rjust(13)
+        median_value_string = f"{np.nanmedian(self.data):.4f}".rjust(13)
+        lines.append(f"min value:    {min_value_string}")
+        lines.append(f"max value:    {max_value_string}")
+        lines.append(f"mean value:   {mean_value_string}")
+        lines.append(f"median value: {median_value_string}")
+
+        if self.mask is not None:
+            lines.append('')
+            fraction_masked = np.sum(self.mask) / np.prod(self.mask.shape)
+            fraction_masked_string = f"{100 * fraction_masked:.4f}".rjust(14)
+            lines.append(f'mask [out]:  {fraction_masked_string}%')
+        
+        repr_string = '\n'.join(lines)
         return repr_string
 
     def set_mask(self, mask: np.ndarray) -> None:
@@ -355,7 +372,7 @@ class GridGradient(GridProperty):
         """
         super().__init__(
             GridPropertyName.GRADIENT, 
-            GridPropertyUnit.STELLAR_LUMINOSITY_PER_DAY, 
+            GridPropertyUnit.NONE, 
             data, 
             grid_parameters
         )
@@ -365,45 +382,31 @@ class GridGradient(GridProperty):
         self.orbital_scale: float = None
         self.transmission_change: float = None
 
-    def __str__(self) -> str:
-        """
-        This produces a string representation for the user. Overridden to
-        include mask parameters.
-        
-        Returns
-        -------
-        str_string : str
-            Representation string for grid property class.
-        """
-        data_shape = str(self.data.shape)
-        str_string = self.__repr__() + f" with size {data_shape}"
-
-        if self.mask is not None:
-            str_string = str_string + " -> mask available\n"
-            
-            measured = f' measured gradient: {self.measured_gradient:.2f}\n'
-            orbital = f' orbital scale: {self.orbital_scale:.2f}\n'
-            transmission = f' transmission change: {self.transmission_change}'
-            
-            str_string = str_string + measured + orbital + transmission
-
-        return str_string
-
     def __repr__(self) -> str:
         """
-        This generates a string representation that combines the name
-        and the unit with the position. This is overriden to include
-        the position of the grid gradient.
+        This generates a string representation of the grid gradient. This has
+        been overriden to include the position of the grid gradient and
+        additional information about the mask.
         
         Returns
         -------
         repr_string : str
-            This is the name and unit of the grid gradient.
+            Representation string of the grid gradient subclass. This ignores
+            the grid parameters object.
         """
-        name = self.name.get_name()
-        unit = self.unit.get_unit()
-        repr_string = f"{name} [{unit}] @ position = {self.position}"
-
+        lines: list[str] = super().__repr__().split("\n")
+        
+        position = f"{self.position:.4f}".rjust(7)
+        lines[1] = lines[1] + f" @ pos = {position}"
+        if self.mask is not None:
+            measured_gradient = f"{self.measured_gradient:.4f}".rjust(6)
+            lines.append(f"measured gradient:   {measured_gradient}")
+            orbital_scale = f"{self.orbital_scale:.4f}".rjust(9)
+            lines.append(f"orbital scale:    {orbital_scale}")
+            transmission_change = f"{self.transmission_change:.4f}".rjust(6)
+            lines.append(f"transmission change: {transmission_change}")
+            
+        repr_string = "\n".join(lines)
         return repr_string
 
 
@@ -594,6 +597,37 @@ class GridPropertyViewer:
         self.update()
         if frozen is not None:
             self.frozen = validate.boolean(frozen, 'frozen')
+
+    def __str__(self) -> str:
+        """
+        This method produces a string representation of the grid property
+        viewer for the user.
+        
+        Returns
+        -------
+        str_string : str
+            Representation string of the grid property viewer.
+        """
+        str_string = self.__repr__()
+        return str_string
+
+    def __repr__(self) -> str:
+        """
+        This method produces a string representation of the grid property
+        viewer.
+        
+        Returns
+        -------
+        repr_string : str
+            Representation string of the grid property viewer.
+        """
+        lines: list[str] = ['']
+        lines.append('Grid Property Viewer')
+        lines.append(28 * '-')
+        lines.append(self.ax.get_title())
+
+        repr_string = "\n".join(lines)
+        return repr_string
 
     def update_title(self) -> None:
         """

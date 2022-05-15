@@ -4,11 +4,7 @@ class GridPropertyUnit(Enum):
     """All the available units for disk properties."""
     
     ECLIPSE_DURATION = '$t_{ecl}$'
-    STELLAR_RADII = '$R_*$'
-    DAY = 'day'
     DEGREE = '$^o$'
-    STELLAR_RADII_PER_DAY = '$R_*$ / day'
-    STELLAR_LUMINOSITY_PER_DAY = '$L_*$ / day'
     NONE = '-'
 
     def __str__(self) -> str:

@@ -53,23 +53,47 @@ class GridParameters:
 
     def __str__(self) -> str:
         """
-        This returns the representation of the class
+        This returns the string representation of the class.
 
         Returns
         -------
-        grid_parameters : str
+        str_string : str
             String representation of the GridParameters class.
         """
-        dy, dx, rf_array = self.get_vectors()
-        header = '\nGrid Parameters\n---------------'
-        dx_info = f'dx: {dx[0]} -> {dx[-1]} ({len(dx)})'
-        dy_info = f'dy: {dy[0]} -> {dy[-1]} ({len(dy)})'
-        rf_info = f'rf: {rf_array[0]} -> 1 -> {rf_array[0]} ({len(rf_array)})'
-        grid_shape = f'grid_shape: {str(self.grid_shape)}\n'
+        str_string = self.__repr__()
+        return str_string
 
-        grid_parameters = '\n'.join([header, dx_info, dy_info, rf_info, grid_shape])
+    def __repr__(self) -> str:
+        """
+        This generates a string representation of the grid parameters object. 
         
-        return grid_parameters
+        Returns
+        -------
+        repr_string : str
+            Representation string of the grid parameters class. 
+        """
+        dy, dx, rf_array = self.get_vectors()
+        lines: list[str] = ['']
+        lines.append('Grid Parameters')
+        lines.append(28 * '-')
+        
+        dx_min = f"{dx[0]:.2f}".rjust(6)
+        dx_max = f"{dx[-1]:.2f}".rjust(6)
+        lines.append(f"dx: {dx_min} -> {dx_max} ({len(dx)})")
+
+        dy_min = f"{dy[0]:.2f}".rjust(6)
+        dy_max = f"{dy[-1]:.2f}".rjust(6)
+        lines.append(f"dy: {dy_min} -> {dy_max} ({len(dy)})")
+
+        rf_min = f"{1:.2f}".rjust(6)
+        rf_max = f"{rf_array[0]:.2f}".rjust(6)
+        rf_num = len(rf_array)
+        lines.append(f"rf: {rf_max} -> {rf_min} -> {rf_max} ({rf_num})")
+
+        lines.append(f'grid_shape: {str(self.grid_shape)}')
+
+        repr_string = "\n".join(lines)
+        return repr_string
 
     def _determine_dx(self, 
             min_x: float, 
