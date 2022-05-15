@@ -233,7 +233,6 @@ class GridProperty:
         fig, ax = plt.subplots()
         viewer = GridPropertyViewer(ax, axis, self, masked, 
             coordinates=coordinates)
-        print(viewer)
         fig.canvas.mpl_connect('scroll_event', viewer.onscroll)
         plt.colorbar(viewer.image)
         plt.show()
