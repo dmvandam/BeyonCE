@@ -118,6 +118,18 @@ class ShallotGrid:
         str_string : str
             String representation of the shallot grid.
         '''
+        str_string = self.__repr__()
+        return str_string
+
+    def __repr__(self) -> str:
+        '''
+        This method is used to print information about the shallot grid.
+        
+        Returns
+        -------
+        repr_string : str
+            String representation of the shallot grid.
+        '''
         # get resolution diagnostic values
         resolution_diagnostic = self.diagnostic_map.data
         max_deviation = np.nanmax(np.abs(resolution_diagnostic))
@@ -150,8 +162,8 @@ class ShallotGrid:
         lines.append('==========================================')
 
         # create str string
-        str_string = "\n".join(lines)
-        return str_string
+        repr_string = "\n".join(lines)
+        return repr_string
 
     def save(self, directory: str, y_value: int = None) -> None:
         """
