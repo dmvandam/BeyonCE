@@ -1614,7 +1614,7 @@ class ShallotGrid:
     def get_gradients(self,
             masked: bool = False,
             property_masked: bool = True
-        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         '''
         This method retrieves the disk gradients.
 
@@ -1632,9 +1632,12 @@ class ShallotGrid:
         positions : np.ndarray (float 1-D)
             This array specifies the positions the gradients were measured at 
             [t_ecl].
-        measured_gradients : np.ndarray (float)
+        measured_gradients : np.ndarray (float 1-D)
             Contains the measured gradients, which have been converted from
             the measured light curve gradients.
+        measured_errors : np.ndarray (float 1-D)
+            Contains the measured gradient errors, which are equivalent to the
+            measured light curve gradient errors.
         disk_gradients : np.ndarray (float 4-D)
             Projected gradients of the ellipses investigated at the provided 
             positions (x, 0), where x [t_ecl].
@@ -1642,6 +1645,7 @@ class ShallotGrid:
         num_gradients = len(self.gradients)
         positions = np.zeros(num_gradients)
         measured_gradients = np.zeros(num_gradients)
+        measured_errors = np.zeros(num_gradients)
         disk_gradients = np.zeros((num_gradients,) + 
             self.parameters.grid_shape)
 
@@ -1654,11 +1658,12 @@ class ShallotGrid:
         for k, gradient in enumerate(self.gradients):
             positions[k] = gradient.position
             measured_gradients[k] = gradient.measured_gradient
+            measured_errors[k] = gradient.measured_error
             disk_gradients[k] = gradient.get_data(property_masked)
             
             disk_gradients[k][combined_mask] = np.nan
 
-        return positions, measured_gradients, disk_gradients
+        return positions, measured_gradients, measured_errors, disk_gradients
 
     def determine_gradient_fit(self, weighted: bool = True) -> None:
         """
