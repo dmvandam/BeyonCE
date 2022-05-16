@@ -90,6 +90,7 @@ class ShallotGrid:
         self.diagnostics = diagnostics
         self.diagnostic_map: GridProperty = None
         self.gradients: list[GridGradient] = None
+        self.gradient_fit: GridProperty = None
 
         # set user values
         parameters = validate.class_object(parameters, 'parameters', 
@@ -946,7 +947,10 @@ class ShallotGrid:
         self._set_grid_property_contrast_parameters()
         self._delete_temp_save_dir()
 
-    def get_disk_radius(self, masked: bool = True) -> np.ndarray:
+    def get_disk_radius(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the disk radius.
 
@@ -955,6 +959,9 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
@@ -962,9 +969,19 @@ class ShallotGrid:
             This contains the disk radius values for all disks investigated 
             [t_ecl].
         '''
-        return self.disk_radius.get_data(masked)
+        disk_radius = self.disk_radius.get_data(property_masked)
 
-    def get_inclination(self, masked: bool = True) -> np.ndarray:
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            disk_radius[combined_mask] = np.nan
+        
+        return disk_radius
+
+    def get_inclination(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the inclination.
 
@@ -973,6 +990,9 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
@@ -980,9 +1000,19 @@ class ShallotGrid:
             This contains the inclination values for all disks investigated
             [deg].
         '''
-        return self.inclination.get_data(masked)
+        inclination = self.inclination.get_data(property_masked)
 
-    def get_tilt(self, masked: bool = True) -> np.ndarray:
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            inclination[combined_mask] = np.nan
+        
+        return inclination
+
+    def get_tilt(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the tilt.
 
@@ -991,15 +1021,28 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
         tilt : np.ndarray (float 3-D)
             This contains the tilt values for all disks investigated [deg].
         '''
-        return self.tilt.get_data(masked)
+        tilt = self.tilt.get_data(property_masked)
 
-    def get_fx_map(self, masked: bool = True) -> np.ndarray:
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            tilt[combined_mask] = np.nan
+
+        return tilt
+
+    def get_fx_map(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the fx map.
 
@@ -1008,6 +1051,9 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
@@ -1015,9 +1061,19 @@ class ShallotGrid:
             This contains the fy values for all disk parameter cube grid
             points.
         '''
-        return self.fx_map.get_data(masked)
+        fx_map = self.fx_map.get_data(property_masked)
+
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            fx_map[combined_mask] = np.nan
+
+        return fx_map
     
-    def get_fy_map(self, masked: bool = True) -> np.ndarray:
+    def get_fy_map(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the fy map.
 
@@ -1026,6 +1082,9 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
@@ -1033,7 +1092,14 @@ class ShallotGrid:
             This contains the fy values for all disk parameter cube grid
             points.
         '''
-        return self.fy_map.get_data(masked)
+        fy_map = self.get_fy_map(property_masked)
+
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            fy_map[combined_mask] = np.nan
+
+        return fy_map
 
     def diagnose_fxfy_resolution(self) -> None:
         '''
@@ -1060,7 +1126,10 @@ class ShallotGrid:
         self.logger.info(f'maximum deviation is {maximum_deviation:.4f} - '
             'explore by plotting')
 
-    def get_diagnostic_map(self, masked: bool = True) -> np.ndarray:
+    def get_diagnostic_map(self, 
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
         '''
         This method retrieves the diagnostic map.
 
@@ -1069,6 +1138,9 @@ class ShallotGrid:
         masked : bool
             This determines whether the combined mask is applied or not 
             [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
 
         Returns
         -------
@@ -1076,7 +1148,14 @@ class ShallotGrid:
             This contains the fy values for all disk parameter cube grid
             points.
         '''
-        return self.diagnostic_map.get_data(masked)
+        diagnostic_map = self.diagnostic_map.get_data(property_masked)
+
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            diagnostic_map[combined_mask] = np.nan
+
+        return diagnostic_map
 
     def _fill_quadrants(self, 
             disk_property: GridProperty, 
@@ -1186,10 +1265,11 @@ class ShallotGrid:
         fy_map = self.fy_map.data
 
         # instantiate list of gradients
-        self.gradients: list[GridGradient] = []
+        if self.gradients is None:
+            self.gradients: list[GridGradient] = []
 
         # loop through positions
-        for position in positions:
+        for position in tqdm(positions):
             # shift coordinates to frame centred on the ellipse centre
             x = position - self.parameters.dx
             y = -self.parameters.dy
@@ -1310,7 +1390,16 @@ class ShallotGrid:
             gradient.determine_mask(measured_gradient, orbital_scale,
                 transmission_change)
 
-    def determine_gradients(self, 
+    def _reset_gradient_fit(self):
+        """
+        This method is used to reset the gradient fit after changes are made
+        to the gradients list if necessary.
+        """
+        if self.gradient_fit is not None:
+            self.gradient_fit = None
+            self.logger.info('gradient fit has been cleared')
+
+    def add_gradients(self, 
             times: np.ndarray, 
             light_curve_gradients: np.ndarray, 
             transverse_velocity: float, 
@@ -1321,8 +1410,8 @@ class ShallotGrid:
         '''
         This method is used to convert the gradients measured in a light curve
         [L*/t_ecl] into the right form to be compared with the theoretical
-        gradients determined by .determine_gradients() method. To do this 
-        other astrophysical parameters are required.
+        gradients determined by ._determine_disk_gradients() method. To do 
+        this other astrophysical parameters are required.
 
         Parameters
         ----------
@@ -1377,6 +1466,32 @@ class ShallotGrid:
 
         self._set_measured_gradients_and_masks(light_curve_gradients, 
             transverse_velocity, limb_darkening, transmission_changes)
+        
+        self._reset_gradient_fit()
+        self.gradients.sort()
+
+    def remove_gradients(self, indices: np.ndarray) -> None:
+        """
+        This method is used to remove gradients from the gradients list.
+        
+        Parameters
+        ----------
+        indices : np.ndarray (int 1-D)
+            Contains all the indices that should be removed from the gradients
+            list.
+        """
+        if self.gradients is None:
+            self.logger.info('no gradients found')
+            return
+
+        indices = validate.array(indices, 'indices', num_dimensions=1, 
+            lower_bound=0, upper_bound=len(self.gradients) - 1, dtype='int64')
+        sorted_indices = np.flip(np.sort(indices))
+        
+        for index in sorted_indices:
+            del self.gradients[index]
+
+        self._reset_gradient_fit()
 
     def update_gradient_scaling(self, 
             transverse_velocity: float = None, 
@@ -1441,6 +1556,10 @@ class ShallotGrid:
             validate.same_shape_arrays(arrays_list, names_list)
             
             update_transmission_change = True
+
+        if not update_transmission_change and not update_orbital_scale:
+            self.logger.info('no changes passed')
+            return
         
         for k, gradient in enumerate(self.gradients):
             # select orbital scale
@@ -1460,17 +1579,23 @@ class ShallotGrid:
             gradient.determine_mask(gradient.measured_gradient, orbital_scale, 
                 transmission_change)
         
-    def get_gradients(self, 
-            gradient_masked: bool = True
+        self._reset_gradient_fit()
+        
+    def get_gradients(self,
+            masked: bool = False,
+            property_masked: bool = True
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         '''
         This method retrieves the disk gradients.
 
         Parameters
         ----------
-        gradient_masked : bool
-            This determines whether the relevant gradient mask is applied or not 
-            [default = True].
+        masked : bool
+            This determines whether the combined mask is applied or not 
+            [default = False].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
         
         Returns
         -------
@@ -1489,13 +1614,72 @@ class ShallotGrid:
         measured_gradients = np.zeros(num_gradients)
         disk_gradients = np.zeros((num_gradients,) + 
             self.parameters.grid_shape)
+
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+        else:
+            combined_mask = np.zeros(self.parameters.grid_shape).astype(bool)
         
         for k, gradient in enumerate(self.gradients):
             positions[k] = gradient.position
             measured_gradients[k] = gradient.measured_gradient
-            disk_gradients[k] = gradient.get_data(gradient_masked)
+            disk_gradients[k] = gradient.get_data(property_masked)
+            
+            disk_gradients[k][combined_mask] = np.nan
 
         return positions, measured_gradients, disk_gradients
+
+    def determine_gradient_fit(self) -> None:
+        """
+        This method is used to determine the rms distance between the measured
+        gradients and the disk gradients as a measure of how well a given grid
+        point serves as a solution to the provided data
+        """
+        if self.gradients is None:
+            self.logger.info('no gradients present')
+            return
+        
+        data = np.zeros(self.parameters.grid_shape)
+        for gradient in self.gradients:
+            rms = (gradient.data - gradient._get_scaled_gradient())**2
+            data += rms
+        self.gradient_fit = GridProperty(GridPropertyName.GRADIENT_FIT, 
+            GridPropertyUnit.NONE, data, self.parameters)
+
+    def get_gradient_fit(self,
+            masked: bool = True,
+            property_masked: bool = True
+        ) -> np.ndarray:
+        """
+        This method is used to retrieve the data in the gradient fit
+        
+        Parameters
+        ----------
+        masked : bool
+            This determines whether the combined mask is applied or not 
+            [default = True].
+        property_masked : bool
+            This determines whether the mask attached to the property is
+            applied or not [default = True].
+
+        Returns
+        -------
+        gradient_fit : np.ndarray (float 3-D)
+            This contains the gradient fit for all disks investigated [-].
+        """
+        if self.gradient_fit is None:
+            self.logger.info('no gradient fit found')
+            return
+
+        gradient_fit = self.gradient_fit.get_data(property_masked)
+
+        masked = validate.boolean(masked, 'masked')
+        if masked:
+            combined_mask = self.get_combined_mask()
+            gradient_fit[combined_mask] = np.nan
+
+        return gradient_fit
 
     def generate_hill_radius_mask(self, hill_radius: float) -> None:
         '''
