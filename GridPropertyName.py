@@ -10,6 +10,7 @@ class GridPropertyName(Enum):
     FY_MAP = auto()
     DIAGNOSTIC_MAP = auto()
     GRADIENT = auto()
+    GRADIENT_FIT = auto()
 
     def __str__(self) -> str:
         """

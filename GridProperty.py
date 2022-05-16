@@ -409,6 +409,37 @@ class GridGradient(GridProperty):
         repr_string = "\n".join(lines)
         return repr_string
 
+    def __lt__(self, other: GridGradient) -> bool:
+        """
+        This method is used to determine sorting of grid gradients, which is
+        done by the position value
+        
+        Parameters
+        ----------
+        other : GridGradient
+            Another GridGradient class instance to compare with.
+        """
+        return self.position < other.position
+
+    def _get_scaled_gradient(self):
+        """
+        This method is used to determine the measured gradient that has been
+        scaled by the orbital scale and the transmission scale.
+        
+        Returns
+        -------
+        scaled_gradient : float
+            This is the measured gradient that has been scaled by the orbital
+            scale and the transmission scale.
+        """
+        if self.measured_gradient is None:
+            return
+
+        transmission_scale = 1 / self.transmission_change
+        total_scale = self.orbital_scale * transmission_scale
+        scaled_gradient = self.measured_gradient * total_scale
+
+        return scaled_gradient
 
     def determine_mask(self, 
             measured_gradient: float,
