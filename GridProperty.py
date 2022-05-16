@@ -378,7 +378,8 @@ class GridGradient(GridProperty):
         )
         
         self.position = validate.number(position, 'position')
-        self.measured_gradient = None
+        self.measured_gradient: float = None
+        self.measured_error: float = None
         self.orbital_scale: float = None
         self.transmission_change: float = None
 
@@ -401,6 +402,8 @@ class GridGradient(GridProperty):
         if self.mask is not None:
             measured_gradient = f"{self.measured_gradient:.4f}".rjust(6)
             lines.append(f"measured gradient:   {measured_gradient}")
+            measured_error = f"{self.measured_error:.4f}".rjust(6)
+            lines.append(f"measured error:      {measured_error}")
             orbital_scale = f"{self.orbital_scale:.4f}".rjust(9)
             lines.append(f"orbital scale:    {orbital_scale}")
             transmission_change = f"{self.transmission_change:.4f}".rjust(6)
@@ -421,7 +424,7 @@ class GridGradient(GridProperty):
         """
         return self.position < other.position
 
-    def _get_scaled_gradient(self):
+    def get_scaled_gradient(self):
         """
         This method is used to determine the measured gradient that has been
         scaled by the orbital scale and the transmission scale.
@@ -444,7 +447,8 @@ class GridGradient(GridProperty):
     def determine_mask(self, 
             measured_gradient: float,
             orbital_scale: float,
-            transmission_change : float = None
+            transmission_change: float = None,
+            measured_error: float = None
         ) -> None:
         """
         This method is used to determine the mask based on the appropriately
@@ -463,6 +467,9 @@ class GridGradient(GridProperty):
             This value scales the measured gradient by the change in 
             transmission over the gradient. If unknown use `1`, if unsure then
             use an upper limit.
+        measured_error : float
+            This is the error on the measurement of the measured gradient 
+            [default = None].
         """
         self.measured_gradient = validate.number(measured_gradient, 
             'measured_gradient', lower_bound=0, upper_bound=1)
@@ -475,6 +482,11 @@ class GridGradient(GridProperty):
         self.transmission_change = validate.number(transmission_change, 
             'transmission_change', lower_bound=0, upper_bound=1)
         transmission_scale = 1 / self.transmission_change
+
+        if measured_error is None:
+            measured_error = 1
+        self.measured_error = validate.number(measured_error, 'measured_error',
+            lower_bound=0.)
 
         total_scale = self.orbital_scale * transmission_scale
         self.mask = total_scale * self.measured_gradient > self.data
