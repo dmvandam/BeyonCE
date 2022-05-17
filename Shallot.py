@@ -1835,7 +1835,7 @@ class ShallotGrid:
         
         # generate combined mask
         combined_mask = np.zeros(self.parameters.grid_shape)
-        for k, mask in enumerate(all_masks): 
+        for mask in all_masks:
             if mask is not None:
                 combined_mask += mask.astype(float)
 
