@@ -18,7 +18,7 @@ from GridPropertyUnit import GridPropertyUnit
 from GridProperty import GridProperty, GridGradient
 from errors import LoadError
 
-TEMP_SAVE_DIR = './.temp_shallot'
+TEMP_SAVE_DIR = "./.temp_shallot"
 
 class ShallotGrid:
     """
@@ -59,7 +59,7 @@ class ShallotGrid:
             diagnostics: GridDiagnostics = None, 
             intermittent_saving : bool = False
         ) -> None:
-        '''
+        """
         This is the constructor for the shallot grid class
 
         Parameters
@@ -80,13 +80,13 @@ class ShallotGrid:
             This parameter determines whether the grid is saved after every
             y iteration (useful for large grids with excessive build times)
             [default = False].
-        '''
+        """
         # generate logger
         self._set_logger(logging_level)
 
         if diagnostics is not None:
-            diagnostics = validate.class_object(diagnostics, 'diagnostics',
-                GridDiagnostics, 'GridDiagnostics')
+            diagnostics = validate.class_object(diagnostics, "diagnostics",
+                GridDiagnostics, "GridDiagnostics")
         self.diagnostics = diagnostics
         self.diagnostic_map: GridProperty = None
         self.gradients: list[GridGradient] = None
@@ -96,10 +96,10 @@ class ShallotGrid:
         self._limb_darkening: float = None
 
         # set user values
-        parameters = validate.class_object(parameters, 'parameters', 
-            GridParameters, 'GridParameters')
+        parameters = validate.class_object(parameters, "parameters", 
+            GridParameters, "GridParameters")
         self.parameters = parameters
-        self.num_fxfy = validate.number(num_fxfy, 'num_fxfy',
+        self.num_fxfy = validate.number(num_fxfy, "num_fxfy",
             check_integer=True, lower_bound=1)
 
         # determine circular radius and shear
@@ -114,26 +114,26 @@ class ShallotGrid:
         self.diagnose_fxfy_resolution()
 
     def __str__(self) -> str:
-        '''
+        """
         This method is used to print information about the shallot grid.
         
         Returns
         -------
         str_string : str
             String representation of the shallot grid.
-        '''
+        """
         str_string = self.__repr__()
         return str_string
 
     def __repr__(self) -> str:
-        '''
+        """
         This method is used to print information about the shallot grid.
         
         Returns
         -------
         repr_string : str
             String representation of the shallot grid.
-        '''
+        """
         # get resolution diagnostic values
         resolution_diagnostic = self.diagnostic_map.data
         max_deviation = np.nanmax(np.abs(resolution_diagnostic))
@@ -144,10 +144,10 @@ class ShallotGrid:
         percentage_masked = f"{100 * fraction_masked:.2f}%"
 
         # print information
-        lines: list[str] = ['']
-        lines.append('==========================================')
-        lines.append('******** SHALLOT GRID INFORMATION ********')
-        lines.append('==========================================')
+        lines: list[str] = [""]
+        lines.append("==========================================")
+        lines.append("******** SHALLOT GRID INFORMATION ********")
+        lines.append("==========================================")
         lines.append(self.parameters.__str__())
         lines.append(self.disk_radius.__repr__())
         lines.append(self.tilt.__repr__())
@@ -157,13 +157,13 @@ class ShallotGrid:
                 lines.append(gradient.__repr__())
         if self.diagnostics is not None:
             lines.append(self.diagnostics.__repr__())
-        lines.append('')
-        lines.append('Grid Information')
-        lines.append(28 * '-')
+        lines.append("")
+        lines.append("Grid Information")
+        lines.append(28 * "-")
         lines.append(f"percentage masked: {percentage_masked}")
         lines.append(f"worst interpolation fit: {max_deviation:.9f}")
-        lines.append('')
-        lines.append('==========================================')
+        lines.append("")
+        lines.append("==========================================")
 
         # create str string
         repr_string = "\n".join(lines)
@@ -179,7 +179,7 @@ class ShallotGrid:
         directory : str
             File path for the saved information.
         """
-        directory = validate.string(directory, 'directory')
+        directory = validate.string(directory, "directory")
         # allow saving into the existing temporary save folder
         if directory == TEMP_SAVE_DIR:
             if not os.path.exists(directory):
@@ -189,11 +189,11 @@ class ShallotGrid:
 
         if y_value is not None:
             y_upper_bound = len(self.parameters.dy.flatten())
-            y_value = validate.number(y_value, 'y_value', check_integer=True,
+            y_value = validate.number(y_value, "y_value", check_integer=True,
                 lower_bound=0, upper_bound=y_upper_bound)
-            np.save(f'{directory}/y_value', np.array([y_value]))
+            np.save(f"{directory}/y_value", np.array([y_value]))
 
-        np.save(f'{directory}/num_fxfy', np.array([self.num_fxfy]))
+        np.save(f"{directory}/num_fxfy", np.array([self.num_fxfy]))
         self.parameters.save(directory)
         self.disk_radius.save(directory)
         self.inclination.save(directory)
@@ -218,7 +218,7 @@ class ShallotGrid:
         directory : str
             File path for the saved information.
         """
-        self.num_fxfy = np.load(f'{directory}/num_fxfy.npy')[0]
+        self.num_fxfy = np.load(f"{directory}/num_fxfy.npy")[0]
         self.parameters = GridParameters.load(directory)
         
         self.disk_radius = GridProperty.load(directory, 
@@ -236,22 +236,22 @@ class ShallotGrid:
         try:
             self.diagnostics = GridDiagnostics.load(directory)
         except LoadError:
-            self.logger.debug('no diagnostics found')
+            self.logger.debug("no diagnostics found")
         
         try:
             self.gradients = []
             files = os.listdir(directory)
             
             for f in files:
-                if os.path.splitext(f)[1] == '':
-                    gradient = GridGradient.load_gradient(f'{directory}/{f}')
+                if os.path.splitext(f)[1] == "":
+                    gradient = GridGradient.load_gradient(f"{directory}/{f}")
                     self.gradients.append(gradient)
             
             if len(self.gradients) == 0:
                 self.gradients = None
         
         except LoadError:
-            self.logger.debug('no gradients found')
+            self.logger.debug("no gradients found")
 
     @classmethod
     def load(cls, 
@@ -272,7 +272,7 @@ class ShallotGrid:
         grid : ShallotGrid
             This is the loaded object.
         """
-        directory = validate.string(directory, 'directory')
+        directory = validate.string(directory, "directory")
         temp_parameters = GridParameters(0, 1, 2, 0, 1, 2, 2, 2)
         grid = cls(temp_parameters, 100, logging_level=logging.CRITICAL)
 
@@ -282,8 +282,8 @@ class ShallotGrid:
         grid._determine_shear()
         grid._set_logger(logging_level)
         
-        if os.path.exists(f'{directory}/y_value.npy'):
-            y_value = np.load(f'{directory}/y_value.npy')[0]
+        if os.path.exists(f"{directory}/y_value.npy"):
+            y_value = np.load(f"{directory}/y_value.npy")[0]
             grid._build_grid(intermittent_saving=True, start_y=y_value)
 
         grid._extend_grid()
@@ -292,16 +292,16 @@ class ShallotGrid:
         return grid
 
     def _set_logger(self, logging_level: Enum) -> None:
-        '''
+        """
         This method sets the logger for this class instance.
         
         Parameters
         ----------
         logging_level : Enum
             Determines the logging level used for this class instance.
-        '''
+        """
         # validate
-        logging_level = validate.number(logging_level, 'logging_level', 
+        logging_level = validate.number(logging_level, "logging_level", 
             check_integer=True, lower_bound=10, upper_bound=50)
 
         # define logger
@@ -309,7 +309,7 @@ class ShallotGrid:
         logger.setLevel(logging_level)
 
         # define formatter
-        format = '%(asctime)s - %(levelname)-8s - %(funcName)s: %(message)s'
+        format = "%(asctime)s - %(levelname)-8s - %(funcName)s: %(message)s"
         formatter = logging.Formatter(format)
         
         # define console handler
@@ -325,18 +325,18 @@ class ShallotGrid:
         self.logger = logger
 
     def _determine_circular_radius(self) -> None:
-        '''
+        """
         This method is used to determine the circular radius (i.e. when fy
         and fx are both equal to one).
-        '''
+        """
         self.circular_radius = np.hypot(1/2, self.parameters.dy)
 
     def _determine_shear(self) -> None:
-        '''
+        """
         This method is used to determine the shear parameter that describes
         the x-shearing of a circle to form an ellipse centred on (dx, dy) 
         that passes through (+-1, 0).
-        '''
+        """
         # extract parameters
         dx = self.parameters.dx
         dy = self.parameters.dy
@@ -356,7 +356,7 @@ class ShallotGrid:
         shear[origin] = 0
 
         if np.sum(origin) == 1:
-            self.logger.debug('origin corrected')
+            self.logger.debug("origin corrected")
 
         # set shear
         self.shear = shear
@@ -365,7 +365,7 @@ class ShallotGrid:
             max_value: float, 
             shift: int = 1
         ) -> np.ndarray:
-        '''
+        """
         This method is used to set a scale factor in the x or the y direction.
 
         Parameters
@@ -379,7 +379,7 @@ class ShallotGrid:
         -------
         fxy_array : np.ndarray (float 1-D)
             Either a new fx or fy array to be used for building the grid.
-        '''
+        """
         # determine bounds of the array array
         min_value = (shift - 1) * max_value
         max_value = shift * max_value
@@ -393,7 +393,7 @@ class ShallotGrid:
         return fxy_array
 
     def _determine_fx(self, fy: np.ndarray) -> np.ndarray:
-        '''
+        """
         This method is used to determine the x-direction scale factor fx based
         on the fy array passed.
 
@@ -406,7 +406,7 @@ class ShallotGrid:
         -------
         fx : np.ndarray (float 2-D)
             Value of x-direction scale factors corresponding to input fy.
-        '''
+        """
         # extract necessary parameters
         dy = self.parameters.dy
 
@@ -425,7 +425,7 @@ class ShallotGrid:
         return fx
     
     def _determine_fy(self, fx: np.ndarray) -> np.ndarray:
-        '''
+        """
         This method is used to determine the y-direction scale factor fy based
         on the fx array passed.
 
@@ -438,7 +438,7 @@ class ShallotGrid:
         -------
         fy : np.ndarray (float 2-D)
             Value of y-direction scale factors corresponding to input fx.
-        '''
+        """
         # extract parameters
         dy = self.parameters.dy
 
@@ -455,7 +455,7 @@ class ShallotGrid:
         origin = (self.parameters.dy == 0) * (fx == 1)
         fy[origin] = 1
         if np.sum(origin) == 1:
-            self.logger.debug('origin corrected')
+            self.logger.debug("origin corrected")
 
         return fy
 
@@ -464,7 +464,7 @@ class ShallotGrid:
             fy: np.ndarray, 
             shear_value: float
         ) -> tuple[np.ndarray, np.ndarray]:
-        '''
+        """
         This method is used to determine the angles in the parametric equation
         of the ellipse where dR/dtheta = 0 i.e. the (co)vertices.
 
@@ -484,11 +484,11 @@ class ShallotGrid:
         vertex2 : np.ndarray (float 1-D)
             Contains either the vertex or covertex of the ellipse (opposite to
             vertex1).
-        '''
+        """
         # validate
-        fx = validate.array(fx, 'fx', dtype='float64')
-        fy = validate.array(fy, 'fy', dtype='float64')
-        shear_value = validate.number(shear_value, 'shear_value')
+        fx = validate.array(fx, "fx", dtype="float64")
+        fy = validate.array(fy, "fy", dtype="float64")
+        shear_value = validate.number(shear_value, "shear_value")
 
         # determine helper variables
         numerator = 2 * fx * fy * shear_value
@@ -507,7 +507,7 @@ class ShallotGrid:
             shear_value: float,
             circular_radius_value: float
         ) -> tuple[np.ndarray, np.ndarray]:
-        '''
+        """
         This method takes the parameteric angle of an ellipse function and
         converts that into the cartesian coordinates of that point. It is
         assumed that the ellipse is centred at (0, 0) has a circular radius,
@@ -535,15 +535,15 @@ class ShallotGrid:
         y_sheared : np.ndarray (float 1-D)
             Contains the y-coordinate of the parametric location on the
             ellipse.
-        '''
+        """
         # validate
-        fx = validate.array(fx, 'fx', dtype='float64')
-        fy = validate.array(fy, 'fy', dtype='float64')
+        fx = validate.array(fx, "fx", dtype="float64")
+        fy = validate.array(fy, "fy", dtype="float64")
         parametric_angle = validate.array(parametric_angle, 
-            'parametric_angle', dtype='float64')
-        shear_value = validate.number(shear_value, 'shear_value')
+            "parametric_angle", dtype="float64")
+        shear_value = validate.number(shear_value, "shear_value")
         circular_radius_value = validate.number(circular_radius_value, 
-            'circular_radius_value', lower_bound=0)
+            "circular_radius_value", lower_bound=0)
 
         # get circle coordinates
         x_circle = circular_radius_value * np.cos(parametric_angle)
@@ -565,7 +565,7 @@ class ShallotGrid:
             shear_value: float, 
             circular_radius_value: float
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        '''
+        """
         This method is used to determine the disk parameters of each grid
         point. The disk parameters are the radius, inclination and the tilt.
 
@@ -591,7 +591,7 @@ class ShallotGrid:
         tilt : np.ndarray (float 3-D)
             Three dimensional cube containing disk tilt for all the grid
             points (dy, dx, rf).
-        '''
+        """
         # get (co)vertex angles
         theta1, theta2 = self._calculate_vertex_and_covertex_angles(fx, fy,
             shear_value)
@@ -654,7 +654,7 @@ class ShallotGrid:
         """
         if os.path.exists(TEMP_SAVE_DIR):
             shutil.rmtree(TEMP_SAVE_DIR)
-            self.logger.debug('cleared temp folder')
+            self.logger.debug("cleared temp folder")
         
         os.mkdir(TEMP_SAVE_DIR)
 
@@ -665,7 +665,7 @@ class ShallotGrid:
         """
         if os.path.exists(TEMP_SAVE_DIR):
             shutil.rmtree(TEMP_SAVE_DIR)
-            self.logger.debug('deleted temp folder')
+            self.logger.debug("deleted temp folder")
 
     def _extend_grid_horizontally(self, 
             fy_full: np.ndarray, 
@@ -734,7 +734,7 @@ class ShallotGrid:
                 repeat = False
 
             if shift > 100 * max_value:
-                raise AttributeError('check code or user input')
+                raise AttributeError("check code or user input")
 
         return fy_full, disk_radius_full
 
@@ -805,7 +805,7 @@ class ShallotGrid:
                 repeat = False
 
             if shift > 100 * max_value:
-                raise AttributeError('check code or user input')
+                raise AttributeError("check code or user input")
 
         return fy_full, disk_radius_full
 
@@ -868,7 +868,7 @@ class ShallotGrid:
         """
         parameters = [self.disk_radius, self.inclination, self.tilt, 
             self.fx_map, self.fy_map]
-        cmaps = ['viridis', 'viridis', 'twilight', 'viridis', 'viridis']
+        cmaps = ["viridis", "viridis", "twilight", "viridis", "viridis"]
         
         for parameter, cmap in zip(parameters, cmaps):
             parameter.set_contrast_parameters(color_map=cmap)
@@ -884,7 +884,7 @@ class ShallotGrid:
             intermittent_saving: bool, 
             start_y: int = 0
         ) -> None:
-        '''
+        """
         This method is used to build the shallot grid. It does this grid point
         by grid point and ensures that the extent of the grid goes from Rmin 
         to maximum Rf (rf = 1 to rf = user set value). Interpolation then 
@@ -899,11 +899,11 @@ class ShallotGrid:
         start_y : int
             This is the integer to start the y building of the grid at 
             [default = 0 --> new grid].
-        '''
+        """
         # validate
         intermittent_saving = validate.boolean(intermittent_saving, 
-            'intermittent_saving')
-        start_y = validate.number(start_y, 'start_y', check_integer=True, 
+            "intermittent_saving")
+        start_y = validate.number(start_y, "start_y", check_integer=True, 
             lower_bound=0, upper_bound=len(self.parameters.dy))
 
         # properties
@@ -917,7 +917,7 @@ class ShallotGrid:
         num_y, num_x = self.parameters.slice_shape
 
         for y in range(start_y, num_y):
-            self.logger.info(f'building y = {y+1}/{num_y}')
+            self.logger.info(f"building y = {y+1}/{num_y}")
 
             for x in tqdm(range(num_x)):
                 # extract relevant values
@@ -953,7 +953,7 @@ class ShallotGrid:
 
                 # save diagnostic
                 if self.diagnostics:
-                    key = f'{y}, {x}'
+                    key = f"{y}, {x}"
                     self.diagnostics.save_diagnostic(key, fy, disk_radius)
 
             if intermittent_saving:
@@ -966,7 +966,7 @@ class ShallotGrid:
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the disk radius.
 
         Parameters
@@ -983,10 +983,10 @@ class ShallotGrid:
         disk_radius : np.ndarray (float 3-D)
             This contains the disk radius values for all disks investigated 
             [t_ecl].
-        '''
+        """
         disk_radius = self.disk_radius.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             disk_radius[combined_mask] = np.nan
@@ -997,7 +997,7 @@ class ShallotGrid:
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the inclination.
 
         Parameters
@@ -1014,10 +1014,10 @@ class ShallotGrid:
         inclination : np.ndarray (float 3-D)
             This contains the inclination values for all disks investigated
             [deg].
-        '''
+        """
         inclination = self.inclination.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             inclination[combined_mask] = np.nan
@@ -1028,7 +1028,7 @@ class ShallotGrid:
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the tilt.
 
         Parameters
@@ -1044,10 +1044,10 @@ class ShallotGrid:
         -------
         tilt : np.ndarray (float 3-D)
             This contains the tilt values for all disks investigated [deg].
-        '''
+        """
         tilt = self.tilt.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             tilt[combined_mask] = np.nan
@@ -1058,7 +1058,7 @@ class ShallotGrid:
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the fx map.
 
         Parameters
@@ -1075,10 +1075,10 @@ class ShallotGrid:
         fx_map : np.ndarray (float 3-D)
             This contains the fy values for all disk parameter cube grid
             points.
-        '''
+        """
         fx_map = self.fx_map.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             fx_map[combined_mask] = np.nan
@@ -1089,7 +1089,7 @@ class ShallotGrid:
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the fy map.
 
         Parameters
@@ -1106,10 +1106,10 @@ class ShallotGrid:
         fy_map : np.ndarray (float 3-D)
             This contains the fy values for all disk parameter cube grid
             points.
-        '''
+        """
         fy_map = self.get_fy_map(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             fy_map[combined_mask] = np.nan
@@ -1117,13 +1117,13 @@ class ShallotGrid:
         return fy_map
 
     def diagnose_fxfy_resolution(self) -> None:
-        '''
+        """
         This method generates a diagnosis cube so that one can determine how
         reliable the shallot grid radius fraction interpolation is. It does
         this by comparing the calculated radius fraction with the expected
         radius fraction. In an ideal situation the whole cube should be 0 and
         NaNs.
-        '''
+        """
         # generate disk radius fraction
         min_arg = len(self.parameters.rf) - 1
         minimum_disk_radius = self.disk_radius.data[:, :, min_arg][:, :, None]
@@ -1138,14 +1138,14 @@ class ShallotGrid:
             self.parameters)
 
         maximum_deviation = np.nanmax(np.abs(diagnostic_values))
-        self.logger.info(f'maximum deviation is {maximum_deviation:.4f} - '
-            'explore by plotting')
+        self.logger.info(f"maximum deviation is {maximum_deviation:.4f} - "
+            "explore by plotting")
 
     def get_diagnostic_map(self, 
             masked: bool = True,
             property_masked: bool = True
         ) -> np.ndarray:
-        '''
+        """
         This method retrieves the diagnostic map.
 
         Parameters
@@ -1162,10 +1162,10 @@ class ShallotGrid:
         diagnostic_map : np.ndarray (float 3-D)
             This contains the fy values for all disk parameter cube grid
             points.
-        '''
+        """
         diagnostic_map = self.diagnostic_map.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             diagnostic_map[combined_mask] = np.nan
@@ -1176,7 +1176,7 @@ class ShallotGrid:
             disk_property: GridProperty, 
             is_tilt: bool = False
         ) -> GridProperty:
-        '''
+        """
         This method is used to extend the grid (Q1) to all quadrants to obtain
         a more complete picture. This method can be used for disk radius,
         inclination, tilt, fxMap and fyMap. It is not suitable for gradients.
@@ -1195,7 +1195,7 @@ class ShallotGrid:
         extended_property : GridProperty
             Contains an extended version of the input parameter that now fills
             Q2, Q3 and Q4.
-        '''
+        """
         # instantiate full parameter
         ny, nx, nr = disk_property.data.shape
         full_property = np.zeros((2 * ny, 2 * nx, nr))
@@ -1232,15 +1232,15 @@ class ShallotGrid:
             disk_property.unit, full_property, self.parameters)
 
         if is_tilt:
-            extended_property.set_contrast_parameters(color_map='twilight')
+            extended_property.set_contrast_parameters(color_map="twilight")
         
         return extended_property
 
     def _extend_grid(self) -> None:
-        '''
+        """
         This method extends the grid to all four quadrants and extends the dx
         and dy values accordingly.
-        '''
+        """
         # grid parameters
         try:
             self.parameters.extend_grid()
@@ -1260,7 +1260,7 @@ class ShallotGrid:
         self.fy_map = self._fill_quadrants(self.fy_map)
 
     def _determine_disk_gradients(self, positions: np.ndarray) -> None:
-        '''
+        """
         This method finds the local tangent of a scaled-down version of the 
         ellipse that is centred at (dx, dy) and passes through the points 
         +-(1/2, 0). It is scaled down such that you have a scaled-down 
@@ -1271,9 +1271,9 @@ class ShallotGrid:
         ----------
         positions : np.ndarray (float 1-D)
             Position values at which to determine the local tangents [t_ecl].
-        '''
-        positions = validate.array(positions, 'positions', num_dimensions=1, 
-            dtype='float64')
+        """
+        positions = validate.array(positions, "positions", num_dimensions=1, 
+            dtype="float64")
 
         # extract parameters
         fx_map = self.fx_map.data
@@ -1306,7 +1306,7 @@ class ShallotGrid:
                 self.parameters, position))
 
     def _determine_orbital_scale(self) -> float:
-        '''
+        """
         This method is used to set a light curve gradient scale factor that is
         dependent on the transverse velocity of the occulting object and the
         limb darkening parameter of the star.
@@ -1317,7 +1317,7 @@ class ShallotGrid:
             This is the scale factor that is generated depending on the input
             transverse velocity of the occulter and the limb darkening of the
             star.
-        '''
+        """
         u = self._limb_darkening
 
         limb_darkening_scale = ((6 - 2 * u) / (12 - 12 * u + 3 * np.pi * u))
@@ -1331,7 +1331,7 @@ class ShallotGrid:
             light_curve_gradient_errors: np.ndarray = None,
             transmission_changes: np.ndarray = None
         ) -> None:
-        '''
+        """
         This method is used to convert the gradients measured in a light curve
         [L*/t_ecl] into the disk gradients, so that they can be compared to the 
         theoretical disk gradients determined by .determineDiskGradients() 
@@ -1356,29 +1356,29 @@ class ShallotGrid:
         
         1)  The transmission change must be due to the complete occulting of
             the star by the new transiting ring. This means that the new ring
-            can't partially cover the star.
+            can"t partially cover the star.
         2)  The transmission change given must be greater than or equal to the
             actual transmission change.
 
         The above two points are to prevent over compensation of the gradients
         that will remove potential viable solutions for the light curve fit.
-        '''
+        """
         if light_curve_gradient_errors is None:
             light_curve_gradient_errors = np.ones_like(light_curve_gradients)
         light_curve_gradient_errors = validate.array(
-            light_curve_gradient_errors, 'light_curve_gradient_errors', 
-            lower_bound=0., dtype='float64', num_dimensions=1)
+            light_curve_gradient_errors, "light_curve_gradient_errors", 
+            lower_bound=0., dtype="float64", num_dimensions=1)
 
         if transmission_changes is None:
             transmission_changes = np.ones_like(light_curve_gradients)
         transmission_changes = validate.array(transmission_changes, 
-            'transmission_changes', lower_bound=0, upper_bound=1, 
-            dtype='float64', num_dimensions=1)
+            "transmission_changes", lower_bound=0, upper_bound=1, 
+            dtype="float64", num_dimensions=1)
         
         arrays_list = [light_curve_gradients, light_curve_gradient_errors, 
             transmission_changes]
-        names_list = ['light_curve_gradients', 'light_curve_gradient_errors',
-            'transmission_changes']
+        names_list = ["light_curve_gradients", "light_curve_gradient_errors",
+            "transmission_changes"]
         validate.same_shape_arrays(arrays_list, names_list)
 
         num_new_gradients = len(light_curve_gradients)
@@ -1399,7 +1399,7 @@ class ShallotGrid:
         """
         if self.gradient_fit is not None:
             self.gradient_fit = None
-            self.logger.info('gradient fit has been cleared')
+            self.logger.info("gradient fit has been cleared")
 
     def add_gradients(self, 
             times: np.ndarray, 
@@ -1407,7 +1407,7 @@ class ShallotGrid:
             light_curve_gradient_errors: np.ndarray = None,
             transmission_changes: np.ndarray = None
         ) -> None:
-        '''
+        """
         This method is used to convert the gradients measured in a light curve
         [L*/t_ecl] into the right form to be compared with the theoretical
         gradients determined by ._determine_disk_gradients() method. To do 
@@ -1440,22 +1440,22 @@ class ShallotGrid:
 
         The above two points are to prevent over compensation of the gradients
         that will remove potential viable solutions for the light curve fit.
-        '''
+        """
         if ((self._limb_darkening is None) or (self._eclipse_duration is None)
                 or (self._transverse_velocity is None)):
-            self.logger.info('eclipse parameters missing, '
-                'use .set_eclipse_parameters()')
+            self.logger.info("eclipse parameters missing, "
+                "use .set_eclipse_parameters()")
             return
         
         # validate
-        times = validate.array(times, 'times', num_dimensions=1, 
-            dtype='float64')
+        times = validate.array(times, "times", num_dimensions=1, 
+            dtype="float64")
         light_curve_gradients = validate.array(light_curve_gradients, 
-            'light_curve_gradients', lower_bound=0., upper_bound=1., 
-            num_dimensions=1, dtype='float64')
+            "light_curve_gradients", lower_bound=0., upper_bound=1., 
+            num_dimensions=1, dtype="float64")
                
         arrays_list = [times, light_curve_gradients]
-        names_list = ['times', 'light_curve_gradients']
+        names_list = ["times", "light_curve_gradients"]
         validate.same_shape_arrays(arrays_list, names_list)
 
         # convert gradients
@@ -1479,11 +1479,11 @@ class ShallotGrid:
             list.
         """
         if self.gradients is None:
-            self.logger.info('no gradients found')
+            self.logger.info("no gradients found")
             return
 
-        indices = validate.array(indices, 'indices', num_dimensions=1, 
-            lower_bound=0, upper_bound=len(self.gradients) - 1, dtype='int64')
+        indices = validate.array(indices, "indices", num_dimensions=1, 
+            lower_bound=0, upper_bound=len(self.gradients) - 1, dtype="int64")
         sorted_indices = np.flip(np.sort(indices))
         
         for index in sorted_indices:
@@ -1512,17 +1512,17 @@ class ShallotGrid:
             the linear limb darkening law [-].
         """
         self._eclipse_duration = validate.number(eclipse_duration, 
-            'eclipse_duration', lower_bound=0.)
+            "eclipse_duration", lower_bound=0.)
         self._transverse_velocity = validate.number(transverse_velocity, 
-            'transverse_velocity', lower_bound=0.)
+            "transverse_velocity", lower_bound=0.)
         self._limb_darkening = validate.number(limb_darkening, 
-            'limb_darkening', lower_bound=0., upper_bound=1.)
+            "limb_darkening", lower_bound=0., upper_bound=1.)
         
         # gradients and gradient fit reset due to eclipse duration dependency
         if self.gradients is not None:
             self.gradients = None
-            self.logger.info('gradients set to None due to dependency on '
-                'eclipse duration')
+            self.logger.info("gradients set to None due to dependency on "
+                "eclipse duration")
             self._reset_gradient_fit()
 
     def update_gradient_scaling(self, 
@@ -1530,7 +1530,7 @@ class ShallotGrid:
             limb_darkening: float = None, 
             transmission_changes: np.ndarray = None
         ) -> None:
-        '''
+        """
         This method is used to update the scaling factors (light curve 
         gradient and transmission change) and then subsequently updates the
         measured gradients and the gradient masks. This is due to the fact
@@ -1563,7 +1563,7 @@ class ShallotGrid:
 
         The above two points are to prevent over compensation of the gradients
         that will remove potential viable solutions for the light curve fit.
-        '''
+        """
         # update orbital scale
         update_orbital_scale = False
         
@@ -1579,17 +1579,17 @@ class ShallotGrid:
         update_transmission_change = False
         if transmission_changes is not None:
             transmission_changes = validate.array(transmission_changes, 
-                'transmission_changes', dtype='float64', num_dimensions=1, 
+                "transmission_changes", dtype="float64", num_dimensions=1, 
                 lower_bound=-1, upper_bound=1)
 
             arrays_list = [transmission_changes, np.array(self.gradients)]
-            names_list = ['transmission_changes', 'gradients']
+            names_list = ["transmission_changes", "gradients"]
             validate.same_shape_arrays(arrays_list, names_list)
             
             update_transmission_change = True
 
         if not update_transmission_change and not update_orbital_scale:
-            self.logger.info('no changes passed')
+            self.logger.info("no changes passed")
             return
         
         for k, gradient in enumerate(self.gradients):
@@ -1615,7 +1615,7 @@ class ShallotGrid:
             masked: bool = False,
             property_masked: bool = True
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        '''
+        """
         This method retrieves the disk gradients.
 
         Parameters
@@ -1641,7 +1641,7 @@ class ShallotGrid:
         disk_gradients : np.ndarray (float 4-D)
             Projected gradients of the ellipses investigated at the provided 
             positions (x, 0), where x [t_ecl].
-        '''
+        """
         num_gradients = len(self.gradients)
         positions = np.zeros(num_gradients)
         measured_gradients = np.zeros(num_gradients)
@@ -1649,7 +1649,7 @@ class ShallotGrid:
         disk_gradients = np.zeros((num_gradients,) + 
             self.parameters.grid_shape)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
         else:
@@ -1678,7 +1678,7 @@ class ShallotGrid:
             gradient fit. This is done by the square of the error.
         """
         if self.gradients is None:
-            self.logger.info('no gradients present')
+            self.logger.info("no gradients present")
             return
         
         data = np.zeros(self.parameters.grid_shape)
@@ -1714,20 +1714,87 @@ class ShallotGrid:
             This contains the gradient fit for all disks investigated [-].
         """
         if self.gradient_fit is None:
-            self.logger.info('no gradient fit found')
+            self.logger.info("no gradient fit found")
             return
 
         gradient_fit = self.gradient_fit.get_data(property_masked)
 
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         if masked:
             combined_mask = self.get_combined_mask()
             gradient_fit[combined_mask] = np.nan
 
         return gradient_fit
 
+    def extract_solutions(self, 
+            num_solutions: int = None
+        ) -> tuple[
+                np.ndarray, 
+                np.ndarray, 
+                np.ndarray, 
+                np.ndarray, 
+                np.ndarray,
+                np.ndarray
+            ]:
+        """
+        This method is used to extract the best gradient fit solutions for
+        use in analysis.
+
+        Parameters
+        ----------
+        num_solutions : int
+            The number of solutions to extract [default = None -> all].
+
+        Returns
+        -------
+        rms : np.ndarray (float 1-D)
+            This is the rms value of the given grid point
+        disk_radius : np.ndarray (float 1-D)
+            Disk radius for the given solution [t_ecl].
+        inclination: np.ndarray (float 1-D)
+            Inclination for the given solution [deg].
+        tilt : np.ndarray (float 1-D)
+            Tilt for the given solution [deg].
+        dx : np.ndarray (float 1-D)
+            Dx for the given solution [t_ecl].
+        dy : np.ndarray (float 1-D)
+            Dy for the given solution [t_ecl].
+        """
+        max_solutions = np.sum(~self.get_combined_mask())
+        
+        if num_solutions is None:
+            num_solutions = max_solutions
+        num_solutions = validate.number(num_solutions, "num_solutions",
+            lower_bound=0, upper_bound=max_solutions, check_integer=True)
+
+        rms = np.zeros(num_solutions)
+        disk_radius = np.zeros(num_solutions)
+        inclination = np.zeros(num_solutions)
+        tilt = np.zeros(num_solutions)
+        dx = np.zeros(num_solutions)
+        dy = np.zeros(num_solutions)
+
+        gradient_fit = self.get_gradient_fit()
+        for k in tqdm(range(num_solutions)):
+            (y, x, r) = np.unravel_index(np.nanargmin(gradient_fit),
+                gradient_fit.shape)
+            disk_data, _, _ = self.get_grid_point_data(y, x, r)
+            
+            # fill data
+            rms[k] = gradient_fit[y, x, r]
+            disk_radius[k] = disk_data[0]
+            inclination[k] = disk_data[1]
+            tilt[k] = disk_data[2]
+            dx[k] = disk_data[3]
+            dy[k] = disk_data[4]
+
+            # remove best solution
+            gradient_fit[y, x, r] = np.nan
+
+        return rms, disk_radius, inclination, tilt, dx, dy
+
     def generate_hill_radius_mask(self, hill_radius: float) -> None:
-        '''
+        """
         This method masks the disk parameters according to the Hill radius,
         which is needed to fulfill a stability criterion of the disk.
         
@@ -1736,8 +1803,8 @@ class ShallotGrid:
         hill_radius : float
             Value of the Hill radius, the maximum stable size of the disk 
             [t_ecl].
-        '''
-        hill_radius = validate.number(hill_radius, 'hill_radius', 
+        """
+        hill_radius = validate.number(hill_radius, "hill_radius", 
             lower_bound=0.)
 
         # determine mask
@@ -1750,7 +1817,7 @@ class ShallotGrid:
         self.disk_radius.set_mask(hill_radius_mask)
 
     def get_combined_mask(self) -> np.ndarray:
-        '''
+        """
         This method is used to combine all available masks to a single mask
         that can be applied to each disk property.
 
@@ -1758,7 +1825,7 @@ class ShallotGrid:
         -------
         combined_mask : np.ndarray (bool 3-D)
             Mask where True values are bad, and False values are good.
-        '''
+        """
         # retrieve masks
         all_masks = [self.disk_radius.mask, self.inclination.mask, 
             self.tilt.mask]
@@ -1768,7 +1835,6 @@ class ShallotGrid:
         
         # generate combined mask
         combined_mask = np.zeros(self.parameters.grid_shape)
-        
         for mask in all_masks:
             if mask is not None:
                 combined_mask += mask.astype(float)
@@ -1786,7 +1852,7 @@ class ShallotGrid:
                 tuple[int, int, int], 
                 float
             ]:
-        '''
+        """
         This method determines the closest shallot grid point to the input
         parameters given. Note that the max_occultation_time (~dx) is ignored
         here as it does not influence the shape of the light curve.
@@ -1808,23 +1874,23 @@ class ShallotGrid:
         Returns
         -------
         closest_coordinates : tuple
-            (dy, dx, rf) values of the closest solution
+            (dy, dx, rf) values of the closest solution.
         closest_indices : tuple
             Contains the indices for the closest solution.
         minimum_distance : float
             Is the minimum rms distance from input location to closest grid 
             point.
-        '''
+        """
         # validate
-        disk_radius = validate.number(disk_radius, 'disk_radius', 
+        disk_radius = validate.number(disk_radius, "disk_radius", 
             lower_bound=0)
-        inclination = validate.number(inclination, 'inclination', 
+        inclination = validate.number(inclination, "inclination", 
             lower_bound=0, upper_bound=90)
-        tilt = validate.number(tilt, 'tilt', lower_bound=-180, 
+        tilt = validate.number(tilt, "tilt", lower_bound=-180, 
             upper_bound=180)
         impact_parameter = validate.number(impact_parameter, 
-            'impact_parameter')
-        masked = validate.boolean(masked, 'masked')
+            "impact_parameter")
+        masked = validate.boolean(masked, "masked")
         
         # get sjalot parameters
         grid_disk_radius = self.get_disk_radius(masked)
@@ -1847,6 +1913,12 @@ class ShallotGrid:
         xx = xx / x_num * (x_max - x_min) + x_min
         yy = yy / y_num * (y_max - y_min) + y_min
 
+        # ensure selecting the right portion of the grid
+        if impact_parameter < 0:
+            yy[yy>0] = 1e7
+        elif impact_parameter > 0:
+            yy[yy<0] = -1e7
+
         # determine the distance
         distance = np.sqrt(
             (grid_disk_radius - disk_radius)**2 + 
@@ -1865,16 +1937,16 @@ class ShallotGrid:
         minimum_distance = np.nanmin(distance)
 
         # log information
-        self.logger.info('property_name: input_value --> grid_value')
-        self.logger.info(f'disk_radius: {disk_radius:.2f} --> '
-            f'{grid_disk_radius[closest_indices]:.2f}')
-        self.logger.info(f'inclination: {inclination:.2f} --> '
-            f'{grid_inclination[closest_indices]:.2f}')
-        self.logger.info(f'tilt: {tilt:.2f} --> '
-            f'{grid_tilt[closest_indices]:.2f}')
-        self.logger.info(f'impact_parameter: {impact_parameter:.2f} --> '
-            f'{yy[closest_indices[:2]]}')
-        self.logger.info(f'"fit": {minimum_distance:.6f}')
+        self.logger.info("property_name: input_value --> grid_value")
+        self.logger.info(f"disk_radius: {disk_radius:.2f} --> "
+            f"{grid_disk_radius[closest_indices]:.2f}")
+        self.logger.info(f"inclination: {inclination:.2f} --> "
+            f"{grid_inclination[closest_indices]:.2f}")
+        self.logger.info(f"tilt: {tilt:.2f} --> "
+            f"{grid_tilt[closest_indices]:.2f}")
+        self.logger.info(f"impact_parameter: {impact_parameter:.2f} --> "
+            f"{yy[closest_indices[:2]]}")
+        self.logger.info(f"'fit': {minimum_distance:.6f}")
 
         return closest_coordinates, closest_indices, minimum_distance
 
@@ -1922,11 +1994,11 @@ class ShallotGrid:
         """
         # validations
         max_y, max_x, max_rf = self.parameters.grid_shape
-        y_index = validate.number(y_index, 'y_index', check_integer=True, 
+        y_index = validate.number(y_index, "y_index", check_integer=True, 
             lower_bound=0, upper_bound=max_y)
-        x_index = validate.number(x_index, 'x_index', check_integer=True,
+        x_index = validate.number(x_index, "x_index", check_integer=True,
             lower_bound=0, upper_bound=max_x)
-        rf_index = validate.number(rf_index, 'rf_index', check_integer=True,
+        rf_index = validate.number(rf_index, "rf_index", check_integer=True,
             lower_bound=0, upper_bound=max_rf)
 
         # disk information

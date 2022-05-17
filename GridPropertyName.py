@@ -32,12 +32,12 @@ class GridPropertyName(Enum):
         name : str
             Human readable version of enum name.
         """
-        words = self.name.split('_')
+        words = self.name.split("_")
         formatted_words = []
         
         for word in words:
             formatted_words.append(word.capitalize())
         
-        name = ' '.join(formatted_words)
+        name = " ".join(formatted_words)
 
         return name
