@@ -41,10 +41,10 @@ class GridDiagnostics:
         repr_string : str
             Representation string of the grid diagnostics class.
         """
-        lines: list[str] = ['']
-        lines.append('Grid Diagnostics')
-        lines.append(28 * '-')
-        lines.append(f'diagnostics saved: {len(self.fy_dict.keys())}')
+        lines: list[str] = [""]
+        lines.append("Grid Diagnostics")
+        lines.append(28 * "-")
+        lines.append(f"diagnostics saved: {len(self.fy_dict.keys())}")
         
         repr_string = "\n".join(lines)
         return repr_string
@@ -69,7 +69,7 @@ class GridDiagnostics:
             The disk radius values that correspond to the provided key (stored 
             in disk_radius_dict property).
         """
-        key = validate.string(key, 'key')
+        key = validate.string(key, "key")
         fy = self.fy_dict[key]
         disk_radius = self.disk_radius_dict[key]
 
@@ -95,11 +95,11 @@ class GridDiagnostics:
             The disk radius values that correspond to the provided key (stored 
             in disk_radius_dict property).
         """
-        key = validate.string(key, 'key')
-        fy = validate.array(fy, 'fy', dtype='float64', num_dimensions=1)
-        disk_radius = validate.array(disk_radius, 'disk_radius', 
-            dtype='float64', num_dimensions=1)
-        validate.same_shape_arrays([fy, disk_radius], ['fy', 'disk_radius'])
+        key = validate.string(key, "key")
+        fy = validate.array(fy, "fy", dtype="float64", num_dimensions=1)
+        disk_radius = validate.array(disk_radius, "disk_radius", 
+            dtype="float64", num_dimensions=1)
+        validate.same_shape_arrays([fy, disk_radius], ["fy", "disk_radius"])
 
         self.fy_dict[key] = fy
         self.disk_radius_dict[key] = disk_radius
@@ -114,9 +114,9 @@ class GridDiagnostics:
         directory : str
             File path for the saved information.
         """
-        directory = validate.string(directory, 'directory')
-        np.save(f'{directory}/fy_dict', self.fy_dict)
-        np.save(f'{directory}/disk_radius', self.disk_radius_dict)
+        directory = validate.string(directory, "directory")
+        np.save(f"{directory}/fy_dict", self.fy_dict)
+        np.save(f"{directory}/disk_radius", self.disk_radius_dict)
 
     @classmethod
     def load(cls, directory: str) -> GridDiagnostics:
@@ -134,14 +134,14 @@ class GridDiagnostics:
         grid_diagnostics : GridDiagnostics
             This is the loaded object.
         """
-        directory = validate.string(directory, 'directory')
+        directory = validate.string(directory, "directory")
 
         try:
             grid_diagnostics = cls()
-            grid_diagnostics.fy_dict = np.load(f'{directory}/fy_dict.npy',
+            grid_diagnostics.fy_dict = np.load(f"{directory}/fy_dict.npy",
                 allow_pickle=True).item()
             grid_diagnostics.disk_radius_dict = np.load(
-                f'{directory}/disk_radius_dict.npy', allow_pickle=True).item()
+                f"{directory}/disk_radius_dict.npy", allow_pickle=True).item()
         except Exception:
             raise LoadError("grid diagnostics", directory)
 

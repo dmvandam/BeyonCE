@@ -3,9 +3,9 @@ from enum import Enum
 class GridPropertyUnit(Enum):
     """All the available units for disk properties."""
     
-    ECLIPSE_DURATION = '$t_{ecl}$'
-    DEGREE = '$^o$'
-    NONE = '-'
+    ECLIPSE_DURATION = "$t_{ecl}$"
+    DEGREE = "$^o$"
+    NONE = "-"
 
     def __str__(self) -> str:
         """
@@ -16,13 +16,13 @@ class GridPropertyUnit(Enum):
         unit : str
             Human readable string representation of the enum value selected.
         """
-        words = self.name.split('_')
+        words = self.name.split("_")
         formatted_words = []
         
         for word in words:
             formatted_words.append(word.capitalize())
         
-        unit = ' '.join(formatted_words)
+        unit = " ".join(formatted_words)
         
         return unit
 

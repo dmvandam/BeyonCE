@@ -38,10 +38,10 @@ class InvalidShapeError(Exception):
         arrays_list : list[np.ndarray]
             List of the input arrays.
         """
-        message = ''
+        message = ""
         for name, array in zip(names_list, arrays_list):
-            message = message + f'{name} {str(array.shape)}, '
-        message = message[:-2] + ' should all have the same shape.'
+            message = message + f"{name} {str(array.shape)}, "
+        message = message[:-2] + " should all have the same shape."
         super().__init__(message)
 
 class InvalidDimensionsError(Exception):
@@ -64,6 +64,6 @@ class InvalidDimensionsError(Exception):
         num_dimensions : int
             Number of dimensions the input array should have.
         """
-        message = (f'The {array_name} ({len(array.shape)} dimensions) should '
-            f'have {num_dimensions} dimensions')
+        message = (f"The {array_name} ({len(array.shape)} dimensions) should "
+            f"have {num_dimensions} dimensions")
         super().__init__(message)

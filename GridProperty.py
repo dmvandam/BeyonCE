@@ -54,21 +54,21 @@ class GridProperty:
         grid_parameters : GridParameters
             The vectors that define each dimension of the data cube.
         """
-        validate.class_object(name, 'name', GridPropertyName, 
-            'GridpropertyName')
-        validate.class_object(unit, 'unit', GridPropertyUnit, 
-            'GridPropertyUnit')
-        validate.class_object(grid_parameters, 'grid_parameters', 
-            GridParameters, 'GridParameters')
+        validate.class_object(name, "name", GridPropertyName, 
+            "GridpropertyName")
+        validate.class_object(unit, "unit", GridPropertyUnit, 
+            "GridPropertyUnit")
+        validate.class_object(grid_parameters, "grid_parameters", 
+            GridParameters, "GridParameters")
         
         self.name = name
         self.unit = unit
         self.grid_parameters = grid_parameters
-        self.data = validate.array(data, 'data', dtype='float64',
+        self.data = validate.array(data, "data", dtype="float64",
             num_dimensions=3)
         data_structure = np.ones(grid_parameters.grid_shape)
         validate.same_shape_arrays([data, data_structure], 
-            ['data', 'data_structure'])
+            ["data", "data_structure"])
         
         self.set_contrast_parameters()
 
@@ -84,7 +84,7 @@ class GridProperty:
         str_string : str
             Representation string for grid property class.
         """
-        lines = self.__repr__().split('\n')
+        lines = self.__repr__().split("\n")
         lines.append(self.grid_parameters.__str__())
         
         str_string = "\n".join(lines)
@@ -100,7 +100,7 @@ class GridProperty:
             Representation string of the grid property class. This ignores
             the grid parameters object.
         """
-        lines: list[str] = ['']
+        lines: list[str] = [""]
         parameter = f"{self.name.get_name()} [{self.unit.get_unit()}]"
 
         lines.append(parameter)
@@ -115,12 +115,12 @@ class GridProperty:
         lines.append(f"median value: {median_value_string}")
 
         if self.mask is not None:
-            lines.append('')
+            lines.append("")
             fraction_masked = np.sum(self.mask) / np.prod(self.mask.shape)
             fraction_masked_string = f"{100 * fraction_masked:.4f}".rjust(14)
-            lines.append(f'mask [out]:  {fraction_masked_string}%')
+            lines.append(f"mask [out]:  {fraction_masked_string}%")
         
-        repr_string = '\n'.join(lines)
+        repr_string = "\n".join(lines)
         return repr_string
 
     def set_mask(self, mask: np.ndarray) -> None:
@@ -134,8 +134,8 @@ class GridProperty:
         mask : np.ndarray (bool)
             Mask that points to invalid values.
         """
-        mask = validate.array(mask, 'mask', dtype='bool')
-        validate.same_shape_arrays([mask, self.data], ['mask', 'data'])
+        mask = validate.array(mask, "mask", dtype="bool")
+        validate.same_shape_arrays([mask, self.data], ["mask", "data"])
         
         self.mask = mask
 
@@ -154,7 +154,7 @@ class GridProperty:
         data : np.ndarray (float)
             The grid property data.
         """
-        masked = validate.boolean(masked, 'masked')
+        masked = validate.boolean(masked, "masked")
         data = self.data
 
         if masked and self.mask is not None:
@@ -182,7 +182,7 @@ class GridProperty:
             [default = None].
         color_map : string
             This is the name of the matplotlib color_map to be used to colour
-            the image [default = 'viridis'].
+            the image [default = "viridis"].
         num_colors : integer
             This is the number of colors the color_map should be divided into.
             This is to make the image easier to interpret [default = 11].
@@ -195,19 +195,19 @@ class GridProperty:
         else:
             if vmin is None:
                 vmin = np.nanmin(self.data)
-            self.vmin = validate.number(vmin, 'vmin')       
+            self.vmin = validate.number(vmin, "vmin")       
         
             if vmax is None:
                 vmax = np.nanmax(self.data)
-            self.vmax = validate.number(vmax, 'vmax')
+            self.vmax = validate.number(vmax, "vmax")
         
         if color_map is None:
-            color_map = 'viridis'
-        self.color_map = validate.string(color_map, 'color_map')
+            color_map = "viridis"
+        self.color_map = validate.string(color_map, "color_map")
         
         if num_colors is None:
             num_colors = 11
-        self.num_colors = validate.number(num_colors, 'num_colors', 
+        self.num_colors = validate.number(num_colors, "num_colors", 
             check_integer=True, lower_bound=2)
 
     def plot_cube(self, 
@@ -233,7 +233,7 @@ class GridProperty:
         fig, ax = plt.subplots()
         viewer = GridPropertyViewer(ax, axis, self, masked, 
             coordinates=coordinates)
-        fig.canvas.mpl_connect('scroll_event', viewer.onscroll)
+        fig.canvas.mpl_connect("scroll_event", viewer.onscroll)
         plt.colorbar(viewer.image)
         plt.show()
 
@@ -243,7 +243,7 @@ class GridProperty:
             ax: plt.Axes = None, 
             masked: bool = True
         ) -> tuple[plt.Axes, AxesImage]:
-        '''
+        """
         This method plots a single slice from a fixed grid property viewer.
 
         Parameters
@@ -266,10 +266,10 @@ class GridProperty:
             This Axes objects contains all the plot information on it.
         image : mappable
             Used for colorbars.
-        '''
+        """
         if ax is None:
             ax = plt.gca()
-        ax = validate.class_object(ax, 'ax', plt.Axes, 'Axes')
+        ax = validate.class_object(ax, "ax", plt.Axes, "Axes")
 
         viewer = GridPropertyViewer(ax, axis, self, masked, 
             index=index, frozen=True)
@@ -286,12 +286,12 @@ class GridProperty:
         directory : str
             File path for the saved information.
         """
-        filename_data = f'{self.name.name}_{self.unit.name}'
-        np.save(f'{directory}/{filename_data}', self.data)
+        filename_data = f"{self.name.name}_{self.unit.name}"
+        np.save(f"{directory}/{filename_data}", self.data)
         
         if self.mask is not None:
-            filename_mask = f'{filename_data}_mask'
-            np.save(f'{directory}/{filename_mask}', self.mask)
+            filename_mask = f"{filename_data}_mask"
+            np.save(f"{directory}/{filename_mask}", self.mask)
 
         self.grid_parameters.save(directory)
 
@@ -315,28 +315,28 @@ class GridProperty:
         grid_property : GridProperty
             This is the loaded object.
         """
-        directory = validate.string(directory, 'directory')
-        validate.class_object(name, 'name', GridPropertyName, 
-            'GridPropertyName')
-        validate.class_object(unit, 'unit', GridPropertyUnit, 
-            'GridPropertyUnit')
+        directory = validate.string(directory, "directory")
+        validate.class_object(name, "name", GridPropertyName, 
+            "GridPropertyName")
+        validate.class_object(unit, "unit", GridPropertyUnit, 
+            "GridPropertyUnit")
         
         try:
-            filepath_data = f'{directory}/{name.name}_{unit.name}.npy'
-            data = np.load(f'{filepath_data}')
+            filepath_data = f"{directory}/{name.name}_{unit.name}.npy"
+            data = np.load(f"{filepath_data}")
             grid_parameters = GridParameters.load(directory)
 
             grid_property = cls(name, unit, data, grid_parameters)
             
-            filepath_mask = f'{directory}/{name.name}_{unit.name}_mask.npy'
-            if os.path.exists(f'{filepath_mask}'):
-                mask = np.load(f'{filepath_mask}')
+            filepath_mask = f"{directory}/{name.name}_{unit.name}_mask.npy"
+            if os.path.exists(f"{filepath_mask}"):
+                mask = np.load(f"{filepath_mask}")
                 grid_property.mask = mask
             
             grid_property.set_contrast_parameters()
 
         except Exception:
-            type_string = f'{name.get_name()} [{unit.__str__()}]'
+            type_string = f"{name.get_name()} [{unit.__str__()}]"
             raise LoadError(type_string, directory)
 
         return grid_property
@@ -377,7 +377,7 @@ class GridGradient(GridProperty):
             grid_parameters
         )
         
-        self.position = validate.number(position, 'position')
+        self.position = validate.number(position, "position")
         self.measured_gradient: float = None
         self.measured_error: float = None
         self.orbital_scale: float = None
@@ -472,24 +472,26 @@ class GridGradient(GridProperty):
             [default = None].
         """
         self.measured_gradient = validate.number(measured_gradient, 
-            'measured_gradient', lower_bound=0, upper_bound=1)
+            "measured_gradient", lower_bound=0, upper_bound=1)
         
         self.orbital_scale = validate.number(orbital_scale, 
-            'orbital_scale', lower_bound=0)
+            "orbital_scale", lower_bound=0)
         
         if transmission_change is None:
             transmission_change = 1
         self.transmission_change = validate.number(transmission_change, 
-            'transmission_change', lower_bound=0, upper_bound=1)
+            "transmission_change", lower_bound=0, upper_bound=1)
         transmission_scale = 1 / self.transmission_change
 
         if measured_error is None:
             measured_error = 1
-        self.measured_error = validate.number(measured_error, 'measured_error',
+        self.measured_error = validate.number(measured_error, "measured_error",
             lower_bound=0.)
 
         total_scale = self.orbital_scale * transmission_scale
-        self.mask = total_scale * self.measured_gradient > self.data
+        mask = (total_scale * self.measured_gradient > self.data).astype(float)
+        mask += np.isnan(self.data).astype(float)
+        self.mask = mask.astype(bool)
 
     def save_gradient(self, directory: str) -> None:
         """
@@ -502,19 +504,19 @@ class GridGradient(GridProperty):
             File path for the saved information.
         """
         # change the directory as there can be multiple gradients
-        gradient_directory = f'{directory}/gradient_{self.position:.4f}'
+        gradient_directory = f"{directory}/gradient_{self.position:.4f}"
         if not os.path.exists(gradient_directory):
             os.mkdir(gradient_directory)
 
         self.save(gradient_directory)
 
         # save additional gradient information
-        np.save(f'{gradient_directory}/position', np.array([self.position]))
+        np.save(f"{gradient_directory}/position", np.array([self.position]))
 
         if self.measured_gradient is not None:
             mask_values = np.array([self.measured_gradient, 
                 self.gradient_scale, self.transmission_scale])
-            np.save(f'{gradient_directory}/mask_values', mask_values)
+            np.save(f"{gradient_directory}/mask_values", mask_values)
         
         self.grid_parameters.save(directory)
 
@@ -538,21 +540,21 @@ class GridGradient(GridProperty):
         unit = GridPropertyUnit.STELLAR_LUMINOSITY_PER_DAY
 
         try:
-            filepath_data = f'{directory}/{name.name}_{unit.name}.npy'
-            data = np.load(f'{filepath_data}')
+            filepath_data = f"{directory}/{name.name}_{unit.name}.npy"
+            data = np.load(f"{filepath_data}")
             
             grid_parameters = GridParameters.load(directory)
-            position = np.load(f'{directory}/position.npy')[0]
+            position = np.load(f"{directory}/position.npy")[0]
             
             grid_gradient = cls(data, grid_parameters, position)
             
-            filepath_mask_values = f'{directory}/mask_values.npy'
+            filepath_mask_values = f"{directory}/mask_values.npy"
             if os.path.exists(filepath_mask_values):
                 mask_values = np.load(filepath_mask_values)
                 grid_gradient.determine_mask(*mask_values)
 
         except Exception:
-            type_string = f'{name.get_name()} [{unit.__str__()}]'
+            type_string = f"{name.get_name()} [{unit.__str__()}]"
             raise LoadError(type_string, directory)
 
         return grid_gradient
@@ -594,31 +596,31 @@ class GridPropertyViewer:
         coordinates : list[tuple]
             List of 3-D coordinates to plot if visible in the given slice.
         """
-        self.axis = validate.number(axis, 'axis', check_integer=True, 
+        self.axis = validate.number(axis, "axis", check_integer=True, 
             lower_bound=0, upper_bound=2)
-        ax = validate.class_object(ax, 'ax', plt.Axes, 'Axes')
-        grid_property = validate.class_object(grid_property, 'grid_property', 
-            GridProperty, 'GridProperty')
+        ax = validate.class_object(ax, "ax", plt.Axes, "Axes")
+        grid_property = validate.class_object(grid_property, "grid_property", 
+            GridProperty, "GridProperty")
         self.ax = ax
         self.data = grid_property.get_data(masked)
         self.slice_values = grid_property.grid_parameters.get_vectors()[axis]
 
         if index is None:
             index = len(self.slice_values) // 2
-        self.index = validate.number(index, 'index', check_integer=True, 
+        self.index = validate.number(index, "index", check_integer=True, 
             lower_bound=0, upper_bound=len(self.slice_values) - 1)
 
         if coordinates is not None:
-            coordinates = validate.class_object(coordinates, 'coordinates',
-                list, 'List')
+            coordinates = validate.class_object(coordinates, "coordinates",
+                list, "List")
             for coordinate in coordinates:
                 if len(coordinate) != 3:
-                    raise ValueError('all input coordinates must be tuples '
-                        'with three values')
+                    raise ValueError("all input coordinates must be tuples "
+                        "with three values")
         self.coordinates = coordinates
         self.tolerance = np.abs(self.slice_values[1] - self.slice_values[0]) / 3
 
-        self.slice_name = ['$y$', '$x$', '$R_f$'][axis]
+        self.slice_name = ["$y$", "$x$", "$R_f$"][axis]
         
         
         property_name = f"{grid_property.name.get_name()}"
@@ -633,7 +635,7 @@ class GridPropertyViewer:
 
         # get data slice and set image
         data_slice = np.take(self.data, self.index, axis)
-        self.image = self.ax.imshow(data_slice, origin='lower', cmap=cmap, 
+        self.image = self.ax.imshow(data_slice, origin="lower", cmap=cmap, 
             vmin=grid_property.vmin, vmax=grid_property.vmax, extent=extent)
 
         self.set_rf_ticklabels(grid_property.grid_parameters)
@@ -641,7 +643,7 @@ class GridPropertyViewer:
         self.frozen = False
         self.update()
         if frozen is not None:
-            self.frozen = validate.boolean(frozen, 'frozen')
+            self.frozen = validate.boolean(frozen, "frozen")
 
     def __str__(self) -> str:
         """
@@ -666,9 +668,9 @@ class GridPropertyViewer:
         repr_string : str
             Representation string of the grid property viewer.
         """
-        lines: list[str] = ['']
-        lines.append('Grid Property Viewer')
-        lines.append(28 * '-')
+        lines: list[str] = [""]
+        lines.append("Grid Property Viewer")
+        lines.append(28 * "-")
         lines.append(self.ax.get_title())
 
         repr_string = "\n".join(lines)
@@ -678,15 +680,15 @@ class GridPropertyViewer:
         """
         This method generates the title of the given slice
         """
-        title = (f'{self.title_prefix} - {self.slice_name} = '
-            f'{self.slice_values[self.index]:.4f}')
+        title = (f"{self.title_prefix} - {self.slice_name} = "
+            f"{self.slice_values[self.index]:.4f}")
         
         if self.axis == 2: 
             minimum_radius_index = len(self.slice_values) // 2
             if self.index < minimum_radius_index:
-                title = title + ' - horizontal'
+                title = title + " - horizontal"
             elif self.index > minimum_radius_index:
-                title = title + ' - vertical'
+                title = title + " - vertical"
         
         self.ax.set_title(title)
 
@@ -694,8 +696,8 @@ class GridPropertyViewer:
         """
         This method is used to generate the axes labels
         """
-        xlabel = ['$R_f$', '$R_f$', '$x$'][self.axis]
-        ylabel = ['$x$', '$y$', '$y$'][self.axis]
+        xlabel = ["$R_f$", "$R_f$", "$x$"][self.axis]
+        ylabel = ["$x$", "$y$", "$y$"][self.axis]
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel(ylabel)
 
@@ -754,13 +756,13 @@ class GridPropertyViewer:
         locations = self.ax.get_xticks()
         
         labels = 1 + np.abs(locations - rf_range)
-        labels = np.char.mod('%.2f', labels)
+        labels = np.char.mod("%.2f", labels)
 
         self.ax.set_xticks(locations)
         self.ax.set_xticklabels(labels)
 
     def onscroll(self, event: MouseEvent) -> None:
-        '''
+        """
         This method determines what happens what happens when the scroll wheel
         is used to navigate through the data cube.
         
@@ -768,8 +770,8 @@ class GridPropertyViewer:
         ----------
         event : MouseEvent
             This is used to register scroll events.
-        '''
-        if event.button == 'up' and self.index < len(self.slice_values) - 1:
+        """
+        if event.button == "up" and self.index < len(self.slice_values) - 1:
             self.index += 1
         elif self.index > 0:
             self.index -= 1
@@ -777,9 +779,9 @@ class GridPropertyViewer:
         self.update()
 
     def update(self) -> None:
-        '''
+        """
         This method is used to update the slice of the data cube being viewed.
-        '''
+        """
         if self.frozen:
             return
 
@@ -804,6 +806,6 @@ class GridPropertyViewer:
 
             if self.tolerance > distance:
                 y, x = np.delete(coordinate, self.axis)
-                self.ax.plot(x, y, 'ro')
+                self.ax.plot(x, y, "ro")
             else:
                 self.ax.lines = []

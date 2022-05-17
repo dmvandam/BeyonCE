@@ -73,9 +73,9 @@ class GridParameters:
             Representation string of the grid parameters class. 
         """
         dy, dx, rf_array = self.get_vectors()
-        lines: list[str] = ['']
-        lines.append('Grid Parameters')
-        lines.append(28 * '-')
+        lines: list[str] = [""]
+        lines.append("Grid Parameters")
+        lines.append(28 * "-")
         
         dx_min = f"{dx[0]:.2f}".rjust(6)
         dx_max = f"{dx[-1]:.2f}".rjust(6)
@@ -90,7 +90,7 @@ class GridParameters:
         rf_num = len(rf_array)
         lines.append(f"rf: {rf_max} -> {rf_min} -> {rf_max} ({rf_num})")
 
-        lines.append(f'grid_shape: {str(self.grid_shape)}')
+        lines.append(f"grid_shape: {str(self.grid_shape)}")
 
         repr_string = "\n".join(lines)
         return repr_string
@@ -117,11 +117,11 @@ class GridParameters:
         dx : np.ndarray
             Grid dx dimension vector.
         """
-        min_x = validate.number(min_x, 'min_x')
-        max_x = validate.number(max_x, 'max_x')
+        min_x = validate.number(min_x, "min_x")
+        max_x = validate.number(max_x, "max_x")
         if min_x >= max_x:
-            raise ValueError('max_x must be greater than min_x')
-        num_x = validate.number(num_x, 'num_x', check_integer=True, 
+            raise ValueError("max_x must be greater than min_x")
+        num_x = validate.number(num_x, "num_x", check_integer=True, 
             lower_bound=1)
         
         dx = np.linspace(min_x, max_x, num_x)[None, :, None]
@@ -149,11 +149,11 @@ class GridParameters:
         dy : np.ndarray
             Grid dy dimension vector.
         """
-        min_y = validate.number(min_y, 'min_y')
-        max_y = validate.number(max_y, 'max_y')
+        min_y = validate.number(min_y, "min_y")
+        max_y = validate.number(max_y, "max_y")
         if min_y >= max_y:
-            raise ValueError('max_y must be greater than min_y')
-        num_y = validate.number(num_y, 'num_y', check_integer=True, 
+            raise ValueError("max_y must be greater than min_y")
+        num_y = validate.number(num_y, "num_y", check_integer=True, 
             lower_bound=1)
         
         dy = np.linspace(min_y, max_y, num_y)[:, None, None]
@@ -180,8 +180,8 @@ class GridParameters:
         rf_array : np.ndarray
             Grid rf dimension vector.
         """
-        max_rf = validate.number(max_rf, 'max_rf', lower_bound=1)
-        num_rf = validate.number(num_rf, 'num_rf', check_integer=True,
+        max_rf = validate.number(max_rf, "max_rf", lower_bound=1)
+        num_rf = validate.number(num_rf, "num_rf", check_integer=True,
             lower_bound=1)
         
         rf = np.linspace(1, max_rf, num_rf)
@@ -210,8 +210,8 @@ class GridParameters:
         axes.
         """
         if not self.extendable:
-            raise AttributeError('This grid parameter object can not be '
-                'extended. That is only possible when dx[0] = dy[0] = 0.')
+            raise AttributeError("This grid parameter object can not be "
+                "extended. That is only possible when dx[0] = dy[0] = 0.")
         num_y, num_x = self.slice_shape
         max_y = self.dy[-1, 0, 0]
         max_x = self.dx[0, -1, 0]
@@ -246,11 +246,11 @@ class GridParameters:
         directory : str
             File path for the saved information.
         """
-        directory = validate.string(directory, 'directory')
-        np.save(f'{directory}/dx', self.dx)
-        np.save(f'{directory}/dy', self.dy)
-        np.save(f'{directory}/rf', self.rf)
-        np.save(f'{directory}/rf_array', self.rf_array)
+        directory = validate.string(directory, "directory")
+        np.save(f"{directory}/dx", self.dx)
+        np.save(f"{directory}/dy", self.dy)
+        np.save(f"{directory}/rf", self.rf)
+        np.save(f"{directory}/rf_array", self.rf_array)
 
     @classmethod
     def load(cls, directory: str) -> GridParameters:
@@ -268,14 +268,14 @@ class GridParameters:
         grid_parameters : GridParameters
             This is the loaded object.
         """
-        directory = validate.string(directory, 'directory')
+        directory = validate.string(directory, "directory")
 
         try:
             grid_parameters = cls(0, 1, 1, 0, 1, 1, 2, 1)
-            grid_parameters.dx = np.load(f'{directory}/dx.npy')
-            grid_parameters.dy = np.load(f'{directory}/dy.npy')
-            grid_parameters.rf = np.load(f'{directory}/rf.npy')
-            grid_parameters.rf_array = np.load(f'{directory}/rf_array.npy')
+            grid_parameters.dx = np.load(f"{directory}/dx.npy")
+            grid_parameters.dy = np.load(f"{directory}/dy.npy")
+            grid_parameters.rf = np.load(f"{directory}/rf.npy")
+            grid_parameters.rf_array = np.load(f"{directory}/rf_array.npy")
 
             grid_parameters._set_grid_and_slice_shape()
             grid_parameters._set_extendable()
