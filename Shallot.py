@@ -1451,8 +1451,8 @@ class ShallotGrid:
         times = validate.array(times, "times", num_dimensions=1, 
             dtype="float64")
         light_curve_gradients = validate.array(light_curve_gradients, 
-            "light_curve_gradients", lower_bound=0., upper_bound=1., 
-            num_dimensions=1, dtype="float64")
+            "light_curve_gradients", lower_bound=0., dtype="float64",
+            num_dimensions=1)
                
         arrays_list = [times, light_curve_gradients]
         names_list = ["times", "light_curve_gradients"]
