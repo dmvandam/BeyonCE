@@ -440,7 +440,12 @@ class GridGradient(GridProperty):
 
         transmission_scale = 1 / self.transmission_change
         total_scale = self.orbital_scale * transmission_scale
+        
         scaled_gradient = self.measured_gradient * total_scale
+
+        if scaled_gradient > 1:
+            raise ValueError("scaled gradient is greater than one, check the"
+                " measured gradient, orbital scale and transmission change")
 
         return scaled_gradient
 
@@ -472,7 +477,7 @@ class GridGradient(GridProperty):
             [default = None].
         """
         self.measured_gradient = validate.number(measured_gradient, 
-            "measured_gradient", lower_bound=0, upper_bound=1)
+            "measured_gradient", lower_bound=0)
         
         self.orbital_scale = validate.number(orbital_scale, 
             "orbital_scale", lower_bound=0)
@@ -481,15 +486,14 @@ class GridGradient(GridProperty):
             transmission_change = 1
         self.transmission_change = validate.number(transmission_change, 
             "transmission_change", lower_bound=0, upper_bound=1)
-        transmission_scale = 1 / self.transmission_change
 
         if measured_error is None:
             measured_error = 1
         self.measured_error = validate.number(measured_error, "measured_error",
             lower_bound=0.)
 
-        total_scale = self.orbital_scale * transmission_scale
-        mask = (total_scale * self.measured_gradient > self.data).astype(float)
+        scaled_gradient = self.get_scaled_gradient()
+        mask = (scaled_gradient > self.data).astype(float)
         mask += np.isnan(self.data).astype(float)
         self.mask = mask.astype(bool)
 
