@@ -1107,7 +1107,7 @@ class ShallotGrid:
             This contains the fy values for all disk parameter cube grid
             points.
         """
-        fy_map = self.get_fy_map(property_masked)
+        fy_map = self.fy_map.get_data(property_masked)
 
         masked = validate.boolean(masked, "masked")
         if masked:
@@ -1466,7 +1466,6 @@ class ShallotGrid:
             light_curve_gradient_errors, transmission_changes)
         
         self._reset_gradient_fit()
-        self.gradients.sort()
 
     def remove_gradients(self, indices: np.ndarray) -> None:
         """
@@ -1632,9 +1631,10 @@ class ShallotGrid:
         positions : np.ndarray (float 1-D)
             This array specifies the positions the gradients were measured at 
             [t_ecl].
-        measured_gradients : np.ndarray (float 1-D)
-            Contains the measured gradients, which have been converted from
-            the measured light curve gradients.
+        scaled_gradients : np.ndarray (float 1-D)
+            Contains the scaled gradients, which have been converted from
+            the measured light curve gradients by scaling by the eclipse 
+            duration, transverse velocity and change in transmission.
         measured_errors : np.ndarray (float 1-D)
             Contains the measured gradient errors, which are equivalent to the
             measured light curve gradient errors.
@@ -1644,7 +1644,7 @@ class ShallotGrid:
         """
         num_gradients = len(self.gradients)
         positions = np.zeros(num_gradients)
-        measured_gradients = np.zeros(num_gradients)
+        scaled_gradients = np.zeros(num_gradients)
         measured_errors = np.zeros(num_gradients)
         disk_gradients = np.zeros((num_gradients,) + 
             self.parameters.grid_shape)
@@ -1657,13 +1657,13 @@ class ShallotGrid:
         
         for k, gradient in enumerate(self.gradients):
             positions[k] = gradient.position
-            measured_gradients[k] = gradient.measured_gradient
+            scaled_gradients[k] = gradient.get_scaled_gradient()
             measured_errors[k] = gradient.measured_error
             disk_gradients[k] = gradient.get_data(property_masked)
             
             disk_gradients[k][combined_mask] = np.nan
 
-        return positions, measured_gradients, measured_errors, disk_gradients
+        return positions, scaled_gradients, measured_errors, disk_gradients
 
     def determine_gradient_fit(self, weighted: bool = True) -> None:
         """
@@ -1682,15 +1682,20 @@ class ShallotGrid:
             return
         
         data = np.zeros(self.parameters.grid_shape)
-        for gradient in self.gradients:
+        for gradient in tqdm(self.gradients):
+            # for type hints
+            gradient: GridGradient
+            
             if weighted:
                 weight = gradient.measured_error**2
             else:
                 weight = 1
-            rms = (gradient.data - gradient.get_scaled_gradient())**2 / weight
-            data += rms
+            data += (gradient.get_data(masked=False) - 
+                gradient.get_scaled_gradient())**2 / weight
+        
         self.gradient_fit = GridProperty(GridPropertyName.GRADIENT_FIT, 
             GridPropertyUnit.NONE, data, self.parameters)
+        self.gradient_fit.set_mask(np.isnan(data))
 
     def get_gradient_fit(self,
             masked: bool = True,
@@ -1766,6 +1771,8 @@ class ShallotGrid:
             num_solutions = max_solutions
         num_solutions = validate.number(num_solutions, "num_solutions",
             lower_bound=0, upper_bound=max_solutions, check_integer=True)
+        self.logger.info(f'extracting {num_solutions} out of {max_solutions}'
+            ' possible solutions')
 
         rms = np.zeros(num_solutions)
         disk_radius = np.zeros(num_solutions)
@@ -1778,7 +1785,7 @@ class ShallotGrid:
         for k in tqdm(range(num_solutions)):
             (y, x, r) = np.unravel_index(np.nanargmin(gradient_fit),
                 gradient_fit.shape)
-            disk_data, _, _ = self.get_grid_point_data(y, x, r)
+            disk_data, _, _ = self.get_grid_point_data(y, x, r, masked=False)
             
             # fill data
             rms[k] = gradient_fit[y, x, r]
@@ -1945,7 +1952,7 @@ class ShallotGrid:
         self.logger.info(f"tilt: {tilt:.2f} --> "
             f"{grid_tilt[closest_indices]:.2f}")
         self.logger.info(f"impact_parameter: {impact_parameter:.2f} --> "
-            f"{yy[closest_indices[:2]]}")
+            f"{yy[closest_indices[:2]]:.2f}")
         self.logger.info(f"'fit': {minimum_distance:.6f}")
 
         return closest_coordinates, closest_indices, minimum_distance
@@ -1953,7 +1960,8 @@ class ShallotGrid:
     def get_grid_point_data(self, 
             y_index: int, 
             x_index: int, 
-            rf_index: int
+            rf_index: int,
+            masked: bool = True
         ) -> tuple[
                 tuple[float, float, float, float, float],
                 tuple[float, float, float, float],
@@ -1974,6 +1982,9 @@ class ShallotGrid:
         rf_index : int
             The index of the third dimension that is related to the growth
             factor of the disk radius [-].
+        masked : bool
+            This determines whether the combined mask is applied or not 
+            [default = True].
 
         Returns
         -------
@@ -2002,18 +2013,19 @@ class ShallotGrid:
             lower_bound=0, upper_bound=max_rf)
 
         # disk information
-        disk_radius = self.disk_radius.data[y_index, x_index, rf_index]
-        inclination = self.inclination.data[y_index, x_index, rf_index]
-        tilt = self.tilt.data[y_index, x_index, rf_index]
+        disk_radius = self.get_disk_radius(masked)[y_index, x_index, rf_index]
+        inclination = self.get_inclination(masked)[y_index, x_index, rf_index]
+        tilt = self.get_tilt(masked)[y_index, x_index, rf_index]
         dx = self.parameters.dx.flatten()[x_index]
         dy = self.parameters.dy.flatten()[y_index]
         disk_data = (disk_radius, inclination, tilt, dx, dy)
 
         # grid information
         rf = self.parameters.rf_array[rf_index]
-        fx = self.fx_map.data[y_index, x_index, rf_index]
-        fy = self.fy_map.data[y_index, x_index, rf_index]
-        diagnostic = self.diagnostic_map.data[y_index, x_index, rf_index]
+        fx = self.get_fx_map(masked)[y_index, x_index, rf_index]
+        fy = self.get_fy_map(masked)[y_index, x_index, rf_index]
+        diagnostic = self.get_diagnostic_map(masked)[y_index, x_index, 
+            rf_index]
         grid_data = (rf, fx, fy, diagnostic)
 
         # gradient information
@@ -2022,7 +2034,8 @@ class ShallotGrid:
             gradients = np.zeros(len(self.gradients))
             for k, gradient in enumerate(self.gradients):
                 positions[k] = gradient.position
-                gradients[k] = gradient.data[y_index, x_index, rf_index]
+                gradients[k] = gradient.get_data(masked)[y_index, x_index, 
+                    rf_index]
         else:
             positions = None
             gradients = None

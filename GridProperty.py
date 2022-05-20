@@ -537,7 +537,7 @@ class GridGradient(GridProperty):
             This is the loaded object.
         """
         name = GridPropertyName.GRADIENT
-        unit = GridPropertyUnit.STELLAR_LUMINOSITY_PER_DAY
+        unit = GridPropertyUnit.NONE
 
         try:
             filepath_data = f"{directory}/{name.name}_{unit.name}.npy"
@@ -800,6 +800,8 @@ class GridPropertyViewer:
         if self.coordinates is None:
             return
 
+        plotted = False
+
         for coordinate in self.coordinates:
             distance = np.abs(self.slice_values[self.index] - 
                 coordinate[self.axis])
@@ -807,5 +809,7 @@ class GridPropertyViewer:
             if self.tolerance > distance:
                 y, x = np.delete(coordinate, self.axis)
                 self.ax.plot(x, y, "ro")
-            else:
-                self.ax.lines = []
+                plotted = True
+        
+        if not plotted:
+            self.ax.lines = []
