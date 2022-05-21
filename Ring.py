@@ -22,7 +22,7 @@ class Ring:
             inclination: float = 0, 
             tilt: float = 0
         ) -> None:
-        '''
+        """
         This is the constructor for the class taking in all the necessary 
         parameters.
         
@@ -40,97 +40,187 @@ class Ring:
         tilt : float
             This is the tilt of the ring (angle between the x-axis and the
             semi-major axis of the projected ring ellipse) [default = 0 deg].
-        '''
-        self.inner_radius = validate.number(inner_radius, 'inner_radius', 
-            lower_bound=0.)
-        self.set_outer_radius(outer_radius)
-        self.set_transmission(transmission)
-        self.inclination = validate.number(inclination, 'inclination', 
-            lower_bound=0, upper_bound=90)
-        self.tilt = validate.number(tilt, 'tilt', lower_bound=-180,
-            upper_bound=180)
+        """
+        self.inner_radius = inner_radius
+        self.outer_radius = outer_radius
+        self.transmission = transmission
+        self.inclination = inclination
+        self.tilt = tilt
 
     def __str__(self) -> str:
-        '''
+        """
         This is the print representation of the ring object.
 
         Returns
         -------
         print_ring_class : str
             This contains the string representation of the ring class.
-        '''
+        """
         # get parameter strings
-        inner_radius_string = (f'{self.inner_radius:.4f}').rjust(8)
-        outer_radius_string = (f'{self.outer_radius:.4f}').rjust(8)
-        transmission_string = (f'{self.transmission:.4f}').rjust(8)
-        inclination_string = (f'{self.inclination:.4f}').rjust(9)
-        tilt_string = (f'{self.tilt:.4f}').rjust(16)
+        inner_radius_string = (f"{self.inner_radius:.4f}").rjust(8)
+        outer_radius_string = (f"{self.outer_radius:.4f}").rjust(8)
+        transmission_string = (f"{self.transmission:.4f}").rjust(8)
+        inclination_string = (f"{self.inclination:.4f}").rjust(9)
+        tilt_string = (f"{self.tilt:.4f}").rjust(16)
 
         # write lines
-        lines = ['']
-        lines.append('============================')
-        lines.append('***** RING INFORMATION *****')
-        lines.append('============================\n')
-        lines.append(f'Inner Radius: {inner_radius_string} [R*]')
-        lines.append(f'Outer Radius: {outer_radius_string} [R*]')
-        lines.append(f'Transmission: {transmission_string} [-]')
-        lines.append(f'Inclination: {inclination_string} [deg]')
-        lines.append(f'Tilt: {tilt_string} [deg]')
-        lines.append('\n============================')
+        lines = [""]
+        lines.append("============================")
+        lines.append("***** RING INFORMATION *****")
+        lines.append("============================\n")
+        lines.append(f"Inner Radius: {inner_radius_string} [R*]")
+        lines.append(f"Outer Radius: {outer_radius_string} [R*]")
+        lines.append(f"Transmission: {transmission_string} [-]")
+        lines.append(f"Inclination: {inclination_string} [deg]")
+        lines.append(f"Tilt: {tilt_string} [deg]")
+        lines.append("\n============================")
 
         # get print string
         print_ring_class = "\n".join(lines)
 
         return print_ring_class
 
-    def set_inner_radius(self, inner_radius: float) -> None:
-        '''
+    @property
+    def inner_radius(self) -> float:
+        """
+        This method gets the inner radius of the ring.
+        
+        Returns
+        -------
+        inner_radius : float
+            This is the inner radius of the ring [R*].
+        """
+        return self._inner_radius
+
+    @inner_radius.setter
+    def inner_radius(self, inner_radius: float) -> None:
+        """
         This method sets the inner radius of the ring.
 
         Parameters
         ----------
         inner_radius : float
             This is the inner radius of the ring [R*].
-        '''
-        inner_radius = validate.number(inner_radius, 'inner_radius', 
-            lower_bound=0., upper_bound=self.outer_radius, exclusive=True)
-
+        """
+        # initialisation except block
+        try:
+            upper_bound = self.outer_radius
+        except Exception:
+            upper_bound = np.inf
+        
         # correct for pyppluss simulation of light curves
         if inner_radius == 0.:
             inner_radius = 1e-16
 
-        self.inner_radius = inner_radius
+        self._inner_radius = validate.number(inner_radius, "inner_radius", 
+            lower_bound=0., upper_bound=upper_bound, exclusive=True)
 
-    def set_outer_radius(self, outer_radius: float) -> None:
-        '''
+    @property
+    def outer_radius(self) -> float:
+        """
+        This method gets the outer radius of the ring
+        
+        Returns
+        -------
+        outer_radius : float
+            This is the outer radius of the ring [R*].
+        """
+        return self._outer_radius
+
+    @outer_radius.setter
+    def outer_radius(self, outer_radius: float) -> None:
+        """
         This method sets the outer radius.
 
         Parameters
         ----------
         outer_radius : float
             This is the outer radius of the ring [R*].
-        '''
-        self.outer_radius = validate.number(outer_radius, 'outer_radius',
+        """
+        self._outer_radius = validate.number(outer_radius, "outer_radius",
             lower_bound=self.inner_radius, exclusive=True)
 
-    def set_transmission(self, transmission: float) -> None:
-        '''
+    @property
+    def transmission(self) -> None:
+        """
+        This method gets the transmission of the ring.
+        
+        Returns
+        -------
+        transmission : float
+            This is the transmission of the ring [-], from 0 to 1.
+        """
+        return self._transmission
+
+    @transmission.setter
+    def transmission(self, transmission: float) -> None:
+        """
         This method sets the transmission of the ring.
         
         Parameters
         ----------
         transmission : float
             This is the transmission of the ring [-], from 0 to 1.
-        '''
-        self.transmission = validate.number(transmission, 'transmission', 
+        """
+        self._transmission = validate.number(transmission, "transmission", 
             lower_bound=0., upper_bound=1.)
+
+    @property
+    def inclination(self) -> float:
+        """
+        This method gets the inclination of the ring.
+        
+        Returns
+        -------
+        inclination : float
+            This is the inclination of the ring [deg], from 0 to 90.
+        """
+        return self._inclination
+
+    @inclination.setter
+    def inclination(self, inclination: float) -> None:
+        """
+        This method sets the inclination of the ring.
+        
+        Parameters
+        ----------
+        inclination : float
+            This is the inclination of the ring [deg], from 0 to 90.
+        """
+        self._inclination = validate.number(inclination, 'inclination',
+            lower_bound=0, upper_bound=90)
+
+    @property
+    def tilt(self) -> float:
+        """
+        This method gets the tilt of the ring.
+        
+        Returns
+        -------
+        tilt: float
+            This is the tilt of the ring [deg], from 0 to 90.
+        """
+        return self._tilt
+
+    @tilt.setter
+    def tilt(self, tilt: float) -> None:
+        """
+        This method sets the tilt of the ring.
+
+        Parameters
+        ----------
+        tilt : float
+            This is the tilt of the ring [deg], from -180 to 180.
+        """
+        self._tilt = validate.number(tilt, 'tilt', lower_bound=-180, 
+            upper_bound=180)
 
     def get_patch(self, 
             x_shift: float = 0, 
             y_shift: float = 0, 
-            face_color: str = 'black'
+            face_color: str = "black"
         ) -> None:
-        '''
+        """
         This function has been edited from a function written by Matthew 
         Kenworthy. The variable names, comments and documentation have been 
         changed, but the functionality has not.
@@ -148,16 +238,16 @@ class Ring:
             This is the CCW angle [deg] between the orbital path and the semi-major 
             axis of the ring [default = 0].
         face_color : str
-            The color of the ring system components [default = 'black'].
+            The color of the ring system components [default = "black"].
         
         Returns
         -------
         patch : matplotlib.patch
             Patch of the ring with input parameters.
-        '''
-        x_shift = validate.number(x_shift, 'x_shift')
-        y_shift = validate.number(y_shift, 'y_shift')
-        face_color = validate.string(face_color, 'face_color')
+        """
+        x_shift = validate.number(x_shift, "x_shift")
+        y_shift = validate.number(y_shift, "y_shift")
+        face_color = validate.string(face_color, "face_color")
 
         # get ring system and ring parameters
         inc = np.deg2rad(self.inclination)
