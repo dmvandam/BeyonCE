@@ -241,7 +241,6 @@ def test_get_patches() -> None:
 def test_print() -> None:
     """should print good information"""
     ring = Ring(0, 1, 0.5)
-    print(ring)
     expected = ('\n============================\n***** RING INFORMATION *****'
         '\n============================\n\nInner Radius:   0.0000 [R*]\nOuter'
         ' Radius:   1.0000 [R*]\nTransmission:   0.5000 [-]\nInclination:    '
