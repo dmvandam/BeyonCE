@@ -523,6 +523,9 @@ class RingSystem:
         index = 0
 
         for ring, division in zip(self.rings, num_divisions):
+            # for type hints
+            ring: Ring
+            
             delta_radius = (ring.outer_radius - ring.inner_radius) / division
 
             for i in range(division):

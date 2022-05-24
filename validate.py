@@ -8,43 +8,37 @@ import numpy as np
 from typing import Any, Union
 from errors import InvalidDimensionsError, InvalidShapeError
 
-def boolean(object: Any, object_name: str) -> bool:
+def boolean(parameter: Any, name: str) -> bool:
     """
     This function is used to raise an Exception if the object passed is not 
     a boolean.
     
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object that is validated as a boolean.
-    object_name : str
+    name : str
         Name of the object to be passed in exception message.
     """
-    if type(object) not in [bool]:
-        raise TypeError(f"The {object_name} argument must be a boolean")
-    
-    return object
+    return class_object(parameter, name, bool, "boolean")
 
-def string(object: Any, object_name: str) -> str:
+def string(parameter: Any, name: str) -> str:
     """
     This function is used to raise an Exception if the object passed is not
     a string.
     
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object that is validated as a string.
-    object_name : str
+    name : str
         Name of the object to be passed in exception message.
     """
-    if type(object) != str:
-        raise TypeError(f"The {object_name} argument must be a string")
-
-    return object
+    return class_object(parameter, name, str, "string")
 
 def number(
-        object: Any, 
-        object_name: str, 
+        parameter: Any, 
+        name: str, 
         check_integer: bool = False, 
         lower_bound: float = -np.inf, 
         upper_bound: float = np.inf, 
@@ -53,9 +47,9 @@ def number(
     """
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object that is validated as a number.
-    object_name : str
+    name : str
         Name of the object to be passed in exception message.
     check_integer : bool
         Check if object is an integer [default = False].
@@ -68,15 +62,15 @@ def number(
         upper_bound), instead of [lower_bound, upper_bound]. 
     """
     # validations
-    object = _number_type(object, object_name, check_integer)
-    object = _number_bounds(object, object_name, lower_bound, upper_bound, 
+    parameter = _number_type(parameter, name, check_integer)
+    parameter = _number_bounds(parameter, name, lower_bound, upper_bound, 
         exclusive)
 
-    return object
+    return parameter
 
 def _number_type(
-        object: Any, 
-        object_name: str, 
+        parameter: Any, 
+        name: str, 
         check_integer: bool = False
     ) -> Union[float, int]:
     """
@@ -85,29 +79,39 @@ def _number_type(
     
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object that is validated as a number.
-    object_name : str
+    name : str
         Name of the object to be passed in exception message.
     check_integer : bool
         Check if object is an integer [default = False].
     """
-    int_types = [int, np.int16, np.int32, np.int64]
-    float_types = [float, np.float16, np.float32, np.float64, np.float128]
-
-    if check_integer == True:
-        if type(object) not in int_types:
-            raise TypeError(f"The {object_name} argument must be an integer")
-
-    else:
-        if not (type(object) in int_types or type(object) in float_types):
-            raise TypeError(f"The {object_name} argument must be a number")
+    boolean(check_integer, 'check_integer')
     
-    return object
+    if check_integer:
+        return class_object(parameter, name, int, "integer")
+    
+    invalid = True
+    try:
+        parameter = class_object(parameter, name, int, "integer")
+        invalid = False
+    except TypeError:
+        pass
+
+    try:
+        parameter = class_object(parameter, name, float, "float")
+        invalid = False
+    except TypeError:
+        pass
+
+    if invalid:
+        raise TypeError(f"{name} is not a number")
+    
+    return parameter
 
 def _number_bounds(
-        object: Any, 
-        object_name: str, 
+        number: Union[float, int], 
+        name: str, 
         lower_bound: float = -np.inf, 
         upper_bound: float = np.inf,
         exclusive: bool = False
@@ -118,9 +122,9 @@ def _number_bounds(
     
     Parameters
     ----------
-    object : Any
+    number : float or int
         Number to be bounded.
-    object_name : str
+    name : str
         Name of the object to be passined in exception message.
     lower_bound : float
         Lower bound of the number [default = -np.inf].
@@ -131,7 +135,6 @@ def _number_bounds(
         upper_bound), instead of [lower_bound, upper_bound]. 
     """
     # validations
-    _number_type(object, object_name)
     _number_type(lower_bound, "lower_bound")
     _number_type(upper_bound, "upper_bound")
     boolean(exclusive, "exclusive")
@@ -142,7 +145,7 @@ def _number_bounds(
 
     # validate number bounds
     raise_error = False
-    message = f"The {object_name} argument must be "
+    message = f"The {name} argument must be "
 
     # inclusive
     lower = np.less
@@ -156,13 +159,13 @@ def _number_bounds(
         message_addition = "than"
 
     # try lower bound
-    if lower(object, lower_bound):
+    if lower(number, lower_bound):
         raise_error = True
         addition = f"greater {message_addition} {lower_bound:.4f} and "
         message = message + addition
 
     # try upper bound
-    if upper(object, upper_bound):
+    if upper(number, upper_bound):
         raise_error = True
         addition = f"less {message_addition} {upper_bound:.4f} and "
         message = message + addition
@@ -170,11 +173,11 @@ def _number_bounds(
     if raise_error:
         raise ValueError(message[:-5])
 
-    return object
+    return number
 
 def array(
-        object: Any, 
-        object_name: str, 
+        parameter: Any, 
+        name: str, 
         lower_bound: float = None, 
         upper_bound: float = None, 
         exclusive: bool = False, 
@@ -183,13 +186,13 @@ def array(
     ) -> np.ndarray:
     """
     This function is used to raise an Exception if the object passed is not 
-    iterable array with the given restrictions.
+    a numpy array with the given restrictions.
 
     Parameters
     ----------
-    object : Any
-        Object to be checked for iterability.
-    object_name : str
+    parameter : Any
+        Object to be checked.
+    name : str
         Name of the object to be passed in Exception message.
     lower_bound : float
         Lower bound of the array [default = None].
@@ -205,7 +208,7 @@ def array(
     
     """
     # array?
-    _array_like(object, object_name)
+    _array_like(parameter, name)
 
     # bounds?
     if (lower_bound is not None) or (upper_bound is not None):
@@ -215,22 +218,22 @@ def array(
         if upper_bound is None:
             upper_bound = np.inf
 
-        _array_bounds(object, object_name, lower_bound, upper_bound, 
+        _array_bounds(parameter, name, lower_bound, upper_bound, 
             exclusive)
     
     # dimensions?
     if num_dimensions is not None:
-        _array_dimensions(object, object_name, num_dimensions)
+        _array_dimensions(parameter, name, num_dimensions)
 
     # array type?
     if dtype is not None:
-        _array_type(object, object_name, dtype)
+        _array_type(parameter, name, dtype)
 
-    return object
+    return parameter
 
 def _array_like(
-        object: Any, 
-        object_name: str
+        parameter: Any, 
+        name: str
     ) -> np.ndarray:
     """
     This function is used to raise an Exception if the object passed is not 
@@ -238,15 +241,12 @@ def _array_like(
     
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object to be checked for iterability.
-    object_name : str
+    name : str
         Name of the object to be passed in Exception message.
     """
-    if type(object) != np.ndarray:
-        raise TypeError(f"The {object_name} argument must be array_like")
-    
-    return object
+    return class_object(parameter, name, np.ndarray, "np.ndarray")
 
 def _array_bounds(
         array: np.ndarray, 
@@ -274,7 +274,6 @@ def _array_bounds(
         upper_bound), instead of [lower_bound, upper_bound]. 
     """
     # validate
-    _array_like(array, array_name)
     _number_type(lower_bound, "lower_bound")
     _number_type(upper_bound, "upper_bound")
     boolean(exclusive, "exclusive")
@@ -334,7 +333,6 @@ def _array_dimensions(
         Number of dimensions the array should have.
     """
     # validations
-    _array_like(array, array_name)
     _number_type(num_dimensions, "num_dimensions", check_integer=True)
 
     # validate array dimensions
@@ -359,7 +357,6 @@ def _array_type(array: np.ndarray, array_name: str, dtype: str) -> np.ndarray:
         Type the array should have.
     """
     # validate
-    _array_like(array, array_name)
     string(dtype, "dtype")
 
     # validate array type
@@ -397,7 +394,8 @@ def same_shape_arrays(
     shape = arrays_list[0].shape
     error = False
 
-    for array in arrays_list:
+    for array, name in zip(arrays_list, names_list):
+        array = _array_like(array, name)
         if array.shape != shape:
             error = True
     
@@ -405,8 +403,8 @@ def same_shape_arrays(
         raise InvalidShapeError(names_list, arrays_list)
 
 def class_object(
-        object: Any, 
-        object_name: str, 
+        parameter: Any, 
+        name: str, 
         class_type: Any, 
         class_name: str
     ) -> Any:
@@ -415,9 +413,9 @@ def class_object(
     
     Parameters
     ----------
-    object : Any
+    parameter : Any
         Object that is validate against the class.
-    object_name : str
+    name : str
         Name of the object to be passed in exception message.
     class_type : Any
         Class that the object is validated against.
@@ -426,10 +424,10 @@ def class_object(
 
     Returns
     -------
-    object : Any
+    parameter : Any
         Object passed in.    
     """
-    if not isinstance(object, class_type):
-        raise TypeError(f"{object_name} is not of type {class_name}")
+    if not isinstance(parameter, class_type):
+        raise TypeError(f"{name} is not of type {class_name}")
 
-    return object
+    return parameter

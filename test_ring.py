@@ -246,5 +246,6 @@ def test_print() -> None:
         ' Radius:   1.0000 [R*]\nTransmission:   0.5000 [-]\nInclination:    '
         '0.0000 [deg]\nTilt:           0.0000 [deg]\n\n======================'
         '======')
-    assert expected == ring.__str__()
+    given = ring.__str__()
+    assert expected == given
 
