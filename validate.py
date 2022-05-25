@@ -105,7 +105,7 @@ def _number_type(
         pass
 
     if invalid:
-        raise TypeError(f"{name} is not a number")
+        raise TypeError(f"{name} is not of type 'number'")
     
     return parameter
 
@@ -161,17 +161,17 @@ def _number_bounds(
     # try lower bound
     if lower(number, lower_bound):
         raise_error = True
-        addition = f"greater {message_addition} {lower_bound:.4f} and "
+        addition = f"greater {message_addition} {lower_bound:.4f}"
         message = message + addition
 
     # try upper bound
     if upper(number, upper_bound):
         raise_error = True
-        addition = f"less {message_addition} {upper_bound:.4f} and "
+        addition = f"less {message_addition} {upper_bound:.4f}"
         message = message + addition
 
     if raise_error:
-        raise ValueError(message[:-5])
+        raise ValueError(message)
 
     return number
 
@@ -278,7 +278,7 @@ def _array_bounds(
     _number_type(upper_bound, "upper_bound")
     boolean(exclusive, "exclusive")
 
-    if lower_bound >= upper_bound:
+    if lower_bound > upper_bound:
         raise ValueError(f"The upper_bound argument ({upper_bound:.4f}) must "
             f"be greater than the lower_bound ({lower_bound:.4f}) argument.")
 
@@ -363,8 +363,7 @@ def _array_type(array: np.ndarray, array_name: str, dtype: str) -> np.ndarray:
     array_type = str(array.dtype)
 
     if array_type != dtype:
-        raise TypeError(f"The {array_name} ({array_type}) argument should be"
-            f" of type {dtype}.")
+        raise TypeError(f"{array_name} ({array_type}) is not of type {dtype}")
 
     return array
 
