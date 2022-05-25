@@ -375,7 +375,7 @@ def test_array_bounds_single_value_high_exclusive_false() -> None:
             exclusive=False)
 
     assert str(ERROR.value) == (f"The {NAME} argument must contain solely "
-        f"values less than {upper_bound:.4f}")
+        f"values less than or equal to {upper_bound:.4f}")
 
 
 def test_array_bounds_value_high_exclusive_true() -> None:
