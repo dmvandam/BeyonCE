@@ -257,8 +257,8 @@ class ShallotGrid:
         except LoadError:
             self.logger.debug("no gradients found")
 
+
     @classmethod
- 
     def load(cls, 
             directory: str, 
             logging_level: Enum = logging.INFO

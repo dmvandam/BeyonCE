@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import os
 import numpy as np
+
 import validate
 from errors import LoadError
 from GridParameters import GridParameters
