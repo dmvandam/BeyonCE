@@ -268,8 +268,8 @@ class GridParameters:
         np.save(f"{directory}/rf", self.rf)
         np.save(f"{directory}/rf_array", self.rf_array)
 
+
     @classmethod
- 
     def load(cls, directory: str) -> GridParameters:
         """
         This method loads all the information of this object from a specified
