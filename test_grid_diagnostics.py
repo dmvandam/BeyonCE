@@ -1,3 +1,4 @@
+from tkinter import Grid
 from GridDiagnostics import GridDiagnostics
 from GridParameters import GridParameters
 import pytest
@@ -65,7 +66,8 @@ def test_generate_key_y_invalid() -> None:
     with pytest.raises(ValueError) as ERROR:
         diag._generate_key(2, 0)
 
-    assert str(ERROR.value) == "y value is not allowed."
+    error_message = "The y argument must be less than or equal to 1.0000"
+    assert str(ERROR.value) == error_message
 
 
 def test_generate_key_x_invalid() -> None:
@@ -73,15 +75,16 @@ def test_generate_key_x_invalid() -> None:
     with pytest.raises(ValueError) as ERROR:
         diag._generate_key(0, 2)
 
-    assert str(ERROR.value) == "x value is not allowed."
+    error_message = "The x argument must be less than or equal to 1.0000"
+    assert str(ERROR.value) == error_message
 
 
 def test_generate_key_both_invalid() -> None:
     diag = GridDiagnostics(GRID_PARAMETERS)
     with pytest.raises(ValueError) as ERROR:
-        diag._generate_key(-10, -10)
+        diag._generate_key(10, 10)
 
-    error_message = "y value is not allowed. x value is not allowed."
+    error_message = "The y argument must be less than or equal to 1.0000"
     assert str(ERROR.value) == error_message
 
 
@@ -181,7 +184,44 @@ def test_save_with_allowed() -> None:
         assert np.all(value == diag._disk_radius_dict[key])
 
 
-def test_load_invalid():
+def test_extend() -> None:
+    diag = GridDiagnostics(GRID_PARAMETERS)
+    diag.extend()
+    assert diag._extended == True
+
+
+def test_extended_save() -> None:
+    diag = GridDiagnostics(GRID_PARAMETERS)
+    diag.extend()
+
+    with pytest.raises(RuntimeError) as ERROR:
+        diag.save_diagnostic(0, 0, np.zeros(1), np.ones(1))
+
+    error_message = "diagnostics have been extended and can not be changed"
+    assert str(ERROR.value) == error_message
+
+
+def test_generate_key_extended_invalid() -> None:
+    diag = GridDiagnostics(GRID_PARAMETERS)
+    diag.save_diagnostic(0, 0, np.zeros(1), np.ones(1))
+    diag.extend()
+    
+    with pytest.raises(KeyError) as ERROR:
+        diag.get_diagnostic(0, 0)
+    
+    assert str(ERROR.value) == "'(2, 2)'"
+
+
+def test_generate_key_extended_valid() -> None:
+    diag = GridDiagnostics(GRID_PARAMETERS)
+    diag.save_diagnostic(1, 1, np.zeros(1), np.ones(1))
+    diag.extend()
+
+    key = diag._generate_key(0, 0)
+    assert key == "(2, 2)"
+
+
+def test_load_invalid() -> None:
     directory = "invalid"
     
     with pytest.raises(LoadError) as ERROR:
@@ -191,17 +231,17 @@ def test_load_invalid():
     assert str(ERROR.value) == error_message
 
 
-def test_load_valid():
+def test_load_valid() -> None:
     directory = "test_data"
     os.mkdir(directory)
     fy_dict = {"(1, 0)": np.zeros(2)}
     disk_radius_dict = {"(1, 0)": np.ones(2)}
-    valid_x = np.zeros(2)
-    valid_y = np.ones(2)
+    max_x = 2
+    max_y = 3
+    max_yx = np.array([max_y, max_x])
     np.save(f"{directory}/fy_dict", fy_dict)
     np.save(f"{directory}/disk_radius_dict", disk_radius_dict)
-    np.save(f"{directory}/valid_x", valid_x)
-    np.save(f"{directory}/valid_y", valid_y)
+    np.save(f"{directory}/max_yx", max_yx)
     
     diag = GridDiagnostics.load(directory)
     
@@ -213,7 +253,7 @@ def test_load_valid():
     for key, value, in disk_radius_dict.items():
         assert np.all(value == diag._disk_radius_dict[key])
 
-    assert np.all(diag._valid_x == valid_x)
-    assert np.all(diag._valid_y == valid_y)
+    assert np.all(diag._max_x == max_x)
+    assert np.all(diag._max_y == max_y)
 
     

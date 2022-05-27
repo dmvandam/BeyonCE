@@ -995,8 +995,7 @@ class ShallotGrid:
 
                 # save diagnostic
                 if self.diagnostics:
-                    key = f"{y}, {x}"
-                    self.diagnostics.save_diagnostic(key, fy, disk_radius)
+                    self.diagnostics.save_diagnostic(y, x, fy, disk_radius)
 
             if intermittent_saving:
                 self.save(TEMP_SAVE_DIR, y_value=y)
@@ -1309,6 +1308,9 @@ class ShallotGrid:
         self.tilt = self._fill_quadrants(self.tilt, is_tilt=True)
         self.fx_map = self._fill_quadrants(self.fx_map)
         self.fy_map = self._fill_quadrants(self.fy_map)
+
+        if self.diagnostics is not None:
+            self.diagnostics.extend()
 
  
     def _determine_disk_gradients(self, positions: np.ndarray) -> None:

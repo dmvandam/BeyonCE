@@ -19,11 +19,13 @@ class GridDiagnostics:
         """
         This is the constructor for the disk grid parameter class.
         """
+        validate.class_object(grid_parameters, "grid_parameters", 
+            GridParameters, "GridParameters")
+        self._max_y, self._max_x = grid_parameters.slice_shape
+        
         self._fy_dict: dict = {}
         self._disk_radius_dict: dict = {}
-
-        self._set_valid_key_parameters(grid_parameters)
-
+        self._extended: bool = False
 
     def __str__(self) -> str:
         """
@@ -75,44 +77,30 @@ class GridDiagnostics:
         key : str
             Key for the diagnostic dictionaries of the form (y, x).
         """
-        y = validate.number(y, "y")
-        x = validate.number(x, "x")
+        if self._extended:
+            upper_bound_y = 2 * (self._max_y - 1)
+            upper_bound_x = 2 * (self._max_x - 1)
+        else:
+            upper_bound_y = self._max_y - 1
+            upper_bound_x = self._max_x - 1
 
-        message = ""
-        if np.sum(np.isclose(y, self._valid_y)) == 0:
-            message = message + "y value is not allowed. "
+        y = validate.number(y, "y", lower_bound=0, upper_bound=upper_bound_y, 
+            check_integer=True)
+        x = validate.number(x, "x", lower_bound=0, upper_bound=upper_bound_x, 
+            check_integer=True)
 
-        if np.sum(np.isclose(x, self._valid_x)) == 0:
-            message = message + "x value is not allowed. "
-
-        if message != "":
-            raise ValueError(message[:-1])
+        if self._extended:
+            y = int(np.abs(y - self._max_y))
+            x = int(np.abs(x - self._max_x))
 
         key = f"({y}, {x})"
 
         return key
 
 
-    def _set_valid_key_parameters(self, 
-            grid_parameters: GridParameters
-        ) -> None:
-        """
-        This method is used to set the allowed values for the creating of
-        diagnostic keys.
-        
-        Parameters
-        ----------
-        grid_parameters : GridParameters
-            Instance containing the dx and dy parameters for the generation
-            of keys for the diagnostic dictionaries
-        """
-        self._valid_x = grid_parameters.dx.flatten()
-        self._valid_y = grid_parameters.dy.flatten()
-
-
     def get_diagnostic(self, 
-            y: float, 
-            x: float
+            y: int, 
+            x: int
         ) -> tuple[np.ndarray, np.ndarray]:
         """
         This method is used to extract the diagnostic values from each 
@@ -120,9 +108,9 @@ class GridDiagnostics:
         
         Parameters
         ----------
-        y : float
+        y : int
             The value of y that should be associated with the key.
-        x : float
+        x : int
             The value of x that should be associated with the key.
         
         Returns
@@ -142,8 +130,8 @@ class GridDiagnostics:
 
 
     def save_diagnostic(self, 
-            y: float,
-            x: float, 
+            y: int,
+            x: int, 
             fy: np.ndarray, 
             disk_radius: np.ndarray
         ) -> None:
@@ -152,9 +140,9 @@ class GridDiagnostics:
         
         Parameters
         ----------
-        y : float
+        y : int
             The value of y that should be associated with the key.
-        x : float
+        x : int
             The value of x that should be associated with the key.
         fy : np.ndarray
             The fy values that correspond to the provided key (stored in 
@@ -163,6 +151,10 @@ class GridDiagnostics:
             The disk radius values that correspond to the provided key (stored 
             in disk_radius_dict property).
         """
+        if self._extended:
+            raise RuntimeError("diagnostics have been extended and can not "
+                "be changed")
+                
         fy = validate.array(fy, "fy", dtype="float64", num_dimensions=1)
         disk_radius = validate.array(disk_radius, "disk_radius", 
             dtype="float64", num_dimensions=1)
@@ -171,6 +163,13 @@ class GridDiagnostics:
         key = self._generate_key(y, x)
         self._fy_dict[key] = fy
         self._disk_radius_dict[key] = disk_radius
+
+
+    def extend(self) -> None:
+        """
+        This method sets the status to extended for the diagnostics object
+        """
+        self._extended = True
 
 
     def save(self, directory: str) -> None:
@@ -191,8 +190,7 @@ class GridDiagnostics:
         np.save(f"{directory}/fy_dict", self._fy_dict)
         np.save(f"{directory}/disk_radius_dict", self._disk_radius_dict)
 
-        np.save(f"{directory}/valid_y", self._valid_y)
-        np.save(f"{directory}/valid_x", self._valid_x)
+        np.save(f"{directory}/max_yx", np.array([self._max_y, self._max_x]))
 
 
     @classmethod
@@ -222,8 +220,9 @@ class GridDiagnostics:
             grid_diagnostics._disk_radius_dict = np.load(
                 f"{directory}/disk_radius_dict.npy", allow_pickle=True).item()
             
-            grid_diagnostics._valid_x = np.load(f"{directory}/valid_x.npy")
-            grid_diagnostics._valid_y = np.load(f"{directory}/valid_y.npy")
+            max_y, max_x = np.load(f"{directory}/max_yx.npy")
+            grid_diagnostics._max_x = max_x
+            grid_diagnostics._max_y = max_y
         
         except Exception:
             raise LoadError("grid diagnostics", directory) 
