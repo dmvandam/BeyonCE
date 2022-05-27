@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import numpy as np
 
 import validate
@@ -19,6 +20,7 @@ class GridParameters:
     It also contains methods to save and load the grid parameters.
     """
 
+ 
     def __init__(self, 
             min_x: float, 
             max_x: float, 
@@ -51,6 +53,7 @@ class GridParameters:
         self._set_grid_and_slice_shape()
         self._set_extendable()
 
+ 
     def __str__(self) -> str:
         """
         This returns the string representation of the class.
@@ -63,6 +66,7 @@ class GridParameters:
         str_string = self.__repr__()
         return str_string
 
+ 
     def __repr__(self) -> str:
         """
         This generates a string representation of the grid parameters object. 
@@ -95,6 +99,7 @@ class GridParameters:
         repr_string = "\n".join(lines)
         return repr_string
 
+ 
     def _determine_dx(self, 
             min_x: float, 
             max_x: float, 
@@ -127,6 +132,7 @@ class GridParameters:
         dx = np.linspace(min_x, max_x, num_x)[None, :, None]
         return dx
 
+ 
     def _determine_dy(self, 
             min_y: float, 
             max_y: float, 
@@ -159,6 +165,7 @@ class GridParameters:
         dy = np.linspace(min_y, max_y, num_y)[:, None, None]
         return dy
 
+ 
     def _determine_rf(self, 
             max_rf: float, 
             num_rf: int
@@ -188,6 +195,7 @@ class GridParameters:
         rf_array = np.concatenate((np.flip(rf), rf[1:]), 0)
         return rf, rf_array
 
+ 
     def _set_grid_and_slice_shape(self) -> None:
         """
         This method sets useful grid parameters (grid shape and slice shape).
@@ -196,14 +204,16 @@ class GridParameters:
         self.grid_shape = (len(dy), len(dx), len(rf_array))
         self.slice_shape = (len(dy), len(dx))
 
+ 
     def _set_extendable(self) -> None:
         """
         This method is used to determine whether this particular set of grid
         parameters can be extended
         """
         dy, dx, _ = self.get_vectors()
-        self.extendable = dy[0] == 0 and dx[0] == 0
+        self.extendable: bool = dy[0] == 0 and dx[0] == 0
 
+ 
     def extend_grid(self) -> None:
         """
         This method is used to reflect the grid parameters about the x and y
@@ -221,6 +231,7 @@ class GridParameters:
         self._set_grid_and_slice_shape()
         self._set_extendable()
 
+ 
     def get_vectors(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         This method returns the flattened dy, dx, and rf grid vectors.
@@ -236,6 +247,7 @@ class GridParameters:
         """
         return self.dy.flatten(), self.dx.flatten(), self.rf_array
 
+ 
     def save(self, directory: str) -> None:
         """
         This method saves all the information of this object to a specified
@@ -247,12 +259,17 @@ class GridParameters:
             File path for the saved information.
         """
         directory = validate.string(directory, "directory")
+        
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
         np.save(f"{directory}/dx", self.dx)
         np.save(f"{directory}/dy", self.dy)
         np.save(f"{directory}/rf", self.rf)
         np.save(f"{directory}/rf_array", self.rf_array)
 
     @classmethod
+ 
     def load(cls, directory: str) -> GridParameters:
         """
         This method loads all the information of this object from a specified
