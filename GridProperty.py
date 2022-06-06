@@ -34,6 +34,7 @@ class GridProperty:
     And finally the data can be saved and loaded.
     """
 
+ 
     def __init__(self, 
             name: GridPropertyName, 
             unit: GridPropertyUnit, 
@@ -72,8 +73,9 @@ class GridProperty:
         
         self.set_contrast_parameters()
 
-        self.mask = None
+        self.mask: np.ndarray = None
 
+ 
     def __str__(self) -> str:
         """
         This produces a string representation for the user. It includes
@@ -90,6 +92,7 @@ class GridProperty:
         str_string = "\n".join(lines)
         return str_string
 
+ 
     def __repr__(self):
         """
         This generates a string representation of the grid gradient. 
@@ -123,6 +126,7 @@ class GridProperty:
         repr_string = "\n".join(lines)
         return repr_string
 
+ 
     def set_mask(self, mask: np.ndarray) -> None:
         """
         This method is used to set a mask that can be applied to the data.
@@ -139,6 +143,7 @@ class GridProperty:
         
         self.mask = mask
 
+ 
     def get_data(self, masked: bool = True) -> np.ndarray:
         """
         This method retrieves the data of the property.
@@ -162,6 +167,7 @@ class GridProperty:
         
         return data
 
+ 
     def set_contrast_parameters(self, 
             vmin: float = None, 
             vmax: float = None,
@@ -210,6 +216,7 @@ class GridProperty:
         self.num_colors = validate.number(num_colors, "num_colors", 
             check_integer=True, lower_bound=2)
 
+ 
     def plot_cube(self, 
             axis: int = 2, 
             coordinates: list[tuple[float, float, float]] = None, 
@@ -237,6 +244,7 @@ class GridProperty:
         plt.colorbar(viewer.image)
         plt.show()
 
+ 
     def plot_slice(self, 
             axis: int, 
             index: int, 
@@ -276,6 +284,7 @@ class GridProperty:
 
         return viewer.ax, viewer.image
 
+ 
     def save(self, directory: str) -> None:
         """
         This method saves all the information of this object to a specified
@@ -286,6 +295,9 @@ class GridProperty:
         directory : str
             File path for the saved information.
         """
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
         filename_data = f"{self.name.name}_{self.unit.name}"
         np.save(f"{directory}/{filename_data}", self.data)
         
@@ -294,6 +306,7 @@ class GridProperty:
             np.save(f"{directory}/{filename_mask}", self.mask)
 
         self.grid_parameters.save(directory)
+
 
     @classmethod
     def load(cls, 
@@ -341,6 +354,9 @@ class GridProperty:
 
         return grid_property
 
+
+        
+
 class GridGradient(GridProperty):
     """
     This class is used to define the following grid gradients. Data 
@@ -353,6 +369,7 @@ class GridGradient(GridProperty):
     And finally the data can be saved and loaded.
     """
 
+ 
     def __init__(self, 
             data: np.ndarray, 
             grid_parameters: GridParameters,
@@ -383,6 +400,7 @@ class GridGradient(GridProperty):
         self.orbital_scale: float = None
         self.transmission_change: float = None
 
+ 
     def __repr__(self) -> str:
         """
         This generates a string representation of the grid gradient. This has
@@ -412,6 +430,7 @@ class GridGradient(GridProperty):
         repr_string = "\n".join(lines)
         return repr_string
 
+ 
     def __lt__(self, other: GridGradient) -> bool:
         """
         This method is used to determine sorting of grid gradients, which is
@@ -424,6 +443,7 @@ class GridGradient(GridProperty):
         """
         return self.position < other.position
 
+ 
     def get_scaled_gradient(self):
         """
         This method is used to determine the measured gradient that has been
@@ -444,11 +464,13 @@ class GridGradient(GridProperty):
         scaled_gradient = self.measured_gradient * total_scale
 
         if scaled_gradient > 1:
-            raise ValueError("scaled gradient is greater than one, check the"
+            #raise ValueError
+            print("scaled gradient is greater than one, check the"
                 " measured gradient, orbital scale and transmission change")
 
         return scaled_gradient
 
+ 
     def determine_mask(self, 
             measured_gradient: float,
             orbital_scale: float,
@@ -497,6 +519,7 @@ class GridGradient(GridProperty):
         mask += np.isnan(self.data).astype(float)
         self.mask = mask.astype(bool)
 
+ 
     def save_gradient(self, directory: str) -> None:
         """
         This method saves all the information of this object to a specified
@@ -519,13 +542,15 @@ class GridGradient(GridProperty):
 
         if self.measured_gradient is not None:
             mask_values = np.array([self.measured_gradient, 
-                self.gradient_scale, self.transmission_scale])
+                self.orbital_scale, self.transmission_change, 
+                self.measured_error])
             np.save(f"{gradient_directory}/mask_values", mask_values)
         
         self.grid_parameters.save(directory)
 
+    
     @classmethod
-    def load_gradient(cls, directory: str) -> GridGradient:
+    def load(cls, directory: str) -> GridGradient:
         """
         This method loads all the information of this object from a specified
         directory.
@@ -571,6 +596,7 @@ class GridPropertyViewer:
     list of coordinates can be provided to plot throughout the cube.
     """
 
+ 
     def __init__(self, 
             ax: plt.Axes, 
             axis: int, 
@@ -649,6 +675,7 @@ class GridPropertyViewer:
         if frozen is not None:
             self.frozen = validate.boolean(frozen, "frozen")
 
+ 
     def __str__(self) -> str:
         """
         This method produces a string representation of the grid property
@@ -662,6 +689,7 @@ class GridPropertyViewer:
         str_string = self.__repr__()
         return str_string
 
+ 
     def __repr__(self) -> str:
         """
         This method produces a string representation of the grid property
@@ -680,6 +708,7 @@ class GridPropertyViewer:
         repr_string = "\n".join(lines)
         return repr_string
 
+ 
     def update_title(self) -> None:
         """
         This method generates the title of the given slice
@@ -696,6 +725,7 @@ class GridPropertyViewer:
         
         self.ax.set_title(title)
 
+ 
     def set_labels(self) -> None:
         """
         This method is used to generate the axes labels
@@ -705,6 +735,7 @@ class GridPropertyViewer:
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel(ylabel)
 
+ 
     def determine_extent(self, 
             grid_parameters: GridParameters
         ) -> tuple[float, float, float, float]:
@@ -739,6 +770,7 @@ class GridPropertyViewer:
 
         return extent
 
+ 
     def set_rf_ticklabels(self, grid_parameters: GridParameters) -> None:
         """
         This method sets the labels for the x and y axes. Note that this can
@@ -765,6 +797,7 @@ class GridPropertyViewer:
         self.ax.set_xticks(locations)
         self.ax.set_xticklabels(labels)
 
+ 
     def onscroll(self, event: MouseEvent) -> None:
         """
         This method determines what happens what happens when the scroll wheel
@@ -782,6 +815,7 @@ class GridPropertyViewer:
 
         self.update()
 
+ 
     def update(self) -> None:
         """
         This method is used to update the slice of the data cube being viewed.
@@ -797,6 +831,7 @@ class GridPropertyViewer:
 
         self.image.axes.figure.canvas.draw()
 
+ 
     def plot_coordinates(self) -> None:
         """
         This method is used to plot a point at a specified location.

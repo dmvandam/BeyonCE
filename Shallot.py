@@ -1766,6 +1766,7 @@ class ShallotGrid:
             Dy for the given solution [t_ecl].
         """
         max_solutions = np.sum(~self.get_combined_mask())
+        print(f"{max_solutions = }")
         
         if num_solutions is None:
             num_solutions = max_solutions
