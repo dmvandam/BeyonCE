@@ -1516,6 +1516,8 @@ class ShallotGrid:
         names_list = ["times", "light_curve_gradients"]
         validate.same_shape_arrays(arrays_list, names_list)
 
+        self.logger.info(f"adding {len(times)} gradients")
+
         # convert gradients
         positions = -times / self._eclipse_duration
         self._determine_disk_gradients(positions)
@@ -1745,6 +1747,9 @@ class ShallotGrid:
             return
         
         data = np.zeros(self.parameters.grid_shape)
+        
+        self.logger.info(f"determining {len(self.gradients)} gradient rms's")
+
         for gradient in tqdm(self.gradients):
             # for type hints
             gradient: GridGradient
@@ -1836,6 +1841,7 @@ class ShallotGrid:
             num_solutions = max_solutions
         num_solutions = validate.number(num_solutions, "num_solutions",
             lower_bound=0, upper_bound=max_solutions, check_integer=True)
+        
         self.logger.info(f'extracting {num_solutions} out of {max_solutions}'
             ' possible solutions')
 

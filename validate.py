@@ -65,7 +65,7 @@ def number(
     parameter = _number_type(parameter, name, check_integer)
     parameter = _number_bounds(parameter, name, lower_bound, upper_bound, 
         exclusive)
-
+    
     return parameter
 
 def _number_type(
@@ -89,17 +89,17 @@ def _number_type(
     boolean(check_integer, 'check_integer')
     
     if check_integer:
-        return class_object(parameter, name, int, "integer")
+        return _integer_type(parameter, name)
     
     invalid = True
     try:
-        parameter = class_object(parameter, name, int, "integer")
+        parameter = _integer_type(parameter, name)
         invalid = False
     except TypeError:
         pass
 
     try:
-        parameter = class_object(parameter, name, float, "float")
+        parameter = _float_type(parameter, name)
         invalid = False
     except TypeError:
         pass
@@ -428,5 +428,67 @@ def class_object(
     """
     if not isinstance(parameter, class_type):
         raise TypeError(f"{name} is not of type {class_name}")
+
+    return parameter
+
+def _integer_type(parameter: Any, name: str):
+    """
+    This method is used to ensure that the object passed is an integer type.
+
+    Parameters
+    ----------
+    parameter : Any
+        Object that is validate against the class.
+    name : str
+        Name of the object to be passed in exception message.
+    """
+    int_types = [int, np.int0, np.int8, np.int16, np.int32, np.int64]
+    int_names = ["int", "np.int0", "np.int8", "np.int16", "np.int32", 
+        "np.int64"]
+    
+    valid = False
+    for int_type, int_name in zip(int_types, int_names):
+        try:
+            class_object(parameter, name, int_type, int_name)
+            valid = True
+        except TypeError:
+            pass
+
+        if valid:
+            break
+
+    if not valid:
+        raise TypeError(f"{name} is not of type integer")
+
+    return parameter
+
+def _float_type(parameter: Any, name: str):
+    """
+    This method is used to ensure that the object passed is a float type.
+
+    Parameters
+    ----------
+    parameter : Any
+        Object that is validate against the class.
+    name : str
+        Name of the object to be passed in exception message.
+    """
+    float_types = [float, np.float16, np.float32, np.float64, np.float128]
+    float_names = ["float", "np.float16", "np.float32", "np.float64", 
+        "np.float128"]
+    
+    valid = False
+    for float_type, float_name in zip(float_types, float_names):
+        try:
+            class_object(parameter, name, float_type, float_name)
+            valid = True
+        except TypeError:
+            pass
+
+        if valid:
+            break
+
+    if not valid:
+        raise TypeError(f"{name} is not of type 'number'")
 
     return parameter
