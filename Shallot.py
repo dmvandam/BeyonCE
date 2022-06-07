@@ -52,12 +52,13 @@ class ShallotGrid:
     be saved and loaded.
     """
 
+ 
     def __init__(self,
             parameters: GridParameters, 
             num_fxfy: int, 
             logging_level: Enum = logging.INFO,
-            diagnostics: GridDiagnostics = None, 
-            intermittent_saving : bool = False
+            keep_diagnostics: bool = False, 
+            intermittent_saving: bool = False
         ) -> None:
         """
         This is the constructor for the shallot grid class
@@ -72,10 +73,11 @@ class ShallotGrid:
             grid.
         logging_level : Enum
             This is one of the standard logging levels [default = INFO].
-        diagnostics : GridDiagnostics
-            This parameter is used to store the full set of fy values and
-            corresponding disk radius values which are used to interpolate
-            for the rf dimension [default = None].
+        keep_diagnostics : bool
+            This parameter determines whether diagnostics are saved that store
+            the full set of fy values and corresponding disk radius values 
+            which are used to interpolate for the rf dimension 
+            [default = False].
         intermittent_saving : bool
             This parameter determines whether the grid is saved after every
             y iteration (useful for large grids with excessive build times)
@@ -84,10 +86,6 @@ class ShallotGrid:
         # generate logger
         self._set_logger(logging_level)
 
-        if diagnostics is not None:
-            diagnostics = validate.class_object(diagnostics, "diagnostics",
-                GridDiagnostics, "GridDiagnostics")
-        self.diagnostics = diagnostics
         self.diagnostic_map: GridProperty = None
         self.gradients: list[GridGradient] = None
         self.gradient_fit: GridProperty = None
@@ -102,6 +100,8 @@ class ShallotGrid:
         self.num_fxfy = validate.number(num_fxfy, "num_fxfy",
             check_integer=True, lower_bound=1)
 
+        self._set_diagnostics(keep_diagnostics)
+
         # determine circular radius and shear
         self._determine_circular_radius()
         self._determine_shear()
@@ -113,6 +113,7 @@ class ShallotGrid:
         self._extend_grid()
         self.diagnose_fxfy_resolution()
 
+ 
     def __str__(self) -> str:
         """
         This method is used to print information about the shallot grid.
@@ -125,6 +126,7 @@ class ShallotGrid:
         str_string = self.__repr__()
         return str_string
 
+ 
     def __repr__(self) -> str:
         """
         This method is used to print information about the shallot grid.
@@ -169,6 +171,7 @@ class ShallotGrid:
         repr_string = "\n".join(lines)
         return repr_string
 
+ 
     def save(self, directory: str, y_value: int = None) -> None:
         """
         This method saves all the information of this object to a specified
@@ -208,6 +211,7 @@ class ShallotGrid:
         if self.diagnostics is not None:
             self.diagnostics.save()
 
+ 
     def _load_grid_attributes(self, directory: str) -> None:
         """
         This method is used to load the attributes that correspond to a grid
@@ -253,6 +257,7 @@ class ShallotGrid:
         except LoadError:
             self.logger.debug("no gradients found")
 
+
     @classmethod
     def load(cls, 
             directory: str, 
@@ -291,6 +296,27 @@ class ShallotGrid:
 
         return grid
 
+ 
+    def _set_diagnostics(self, keep_diagnostics: bool) -> None:
+        """
+        This method sets the grid diagnostics if required
+        
+        Parameters
+        ----------
+        keep_diagnostics : bool
+            This parameter determines whether diagnostics are saved that store
+            the full set of fy values and corresponding disk radius values 
+            which are used to interpolate for the rf dimension
+        """
+        keep_diagnostics = validate.boolean(keep_diagnostics, 
+            'keep_diagnostics')
+        
+        if keep_diagnostics:
+            self.diagnostics = GridDiagnostics(self.parameters)
+        else:
+            self.diagnostics = None
+
+ 
     def _set_logger(self, logging_level: Enum) -> None:
         """
         This method sets the logger for this class instance.
@@ -324,6 +350,7 @@ class ShallotGrid:
         # set
         self.logger = logger
 
+ 
     def _determine_circular_radius(self) -> None:
         """
         This method is used to determine the circular radius (i.e. when fy
@@ -331,6 +358,7 @@ class ShallotGrid:
         """
         self.circular_radius = np.hypot(1/2, self.parameters.dy)
 
+ 
     def _determine_shear(self) -> None:
         """
         This method is used to determine the shear parameter that describes
@@ -361,6 +389,7 @@ class ShallotGrid:
         # set shear
         self.shear = shear
 
+ 
     def _generate_fxy_array(self, 
             max_value: float, 
             shift: int = 1
@@ -392,6 +421,7 @@ class ShallotGrid:
 
         return fxy_array
 
+ 
     def _determine_fx(self, fy: np.ndarray) -> np.ndarray:
         """
         This method is used to determine the x-direction scale factor fx based
@@ -424,6 +454,7 @@ class ShallotGrid:
 
         return fx
     
+ 
     def _determine_fy(self, fx: np.ndarray) -> np.ndarray:
         """
         This method is used to determine the y-direction scale factor fy based
@@ -459,6 +490,7 @@ class ShallotGrid:
 
         return fy
 
+ 
     def _calculate_vertex_and_covertex_angles(self, 
             fx: np.ndarray, 
             fy: np.ndarray, 
@@ -500,6 +532,7 @@ class ShallotGrid:
 
         return vertex1, vertex2
 
+ 
     def _calculate_xy_from_parameteric_angle(self, 
             fx: np.ndarray, 
             fy: np.ndarray, 
@@ -559,6 +592,7 @@ class ShallotGrid:
 
         return x_sheared, y_sheared
     
+ 
     def _determine_disk_parameters(self, 
             fx: np.ndarray, 
             fy: np.ndarray, 
@@ -628,6 +662,7 @@ class ShallotGrid:
 
         return disk_radius, inclination, tilt
 
+ 
     def _initialise_grid_properties(self) -> None:
         """
         This method is used to initialise the grid properties in case that
@@ -647,6 +682,7 @@ class ShallotGrid:
         self.fy_map = GridProperty(GridPropertyName.FY_MAP, 
             GridPropertyUnit.NONE, np.copy(empty), self.parameters)
 
+ 
     def _create_temp_save_dir(self) -> None:
         """
         This method is used to create the temporary save folder used for
@@ -658,6 +694,7 @@ class ShallotGrid:
         
         os.mkdir(TEMP_SAVE_DIR)
 
+ 
     def _delete_temp_save_dir(self) -> None:
         """
         This method is used to delete the temporary save folder used for
@@ -667,6 +704,7 @@ class ShallotGrid:
             shutil.rmtree(TEMP_SAVE_DIR)
             self.logger.debug("deleted temp folder")
 
+ 
     def _extend_grid_horizontally(self, 
             fy_full: np.ndarray, 
             disk_radius_full: np.ndarray,
@@ -738,6 +776,7 @@ class ShallotGrid:
 
         return fy_full, disk_radius_full
 
+ 
     def _extend_grid_vertically(self, 
             fy_full: np.ndarray, 
             disk_radius_full: np.ndarray,
@@ -809,6 +848,7 @@ class ShallotGrid:
 
         return fy_full, disk_radius_full
 
+ 
     def _interpolate_scale_values(self,
             fy_full: np.ndarray,
             disk_radius_full: np.ndarray,
@@ -861,6 +901,7 @@ class ShallotGrid:
 
         return fx_valid, fy_valid
 
+ 
     def _set_grid_property_contrast_parameters(self) -> None:
         """
         This method is used to set the contrast parameters of every grid 
@@ -880,6 +921,7 @@ class ShallotGrid:
             for gradient in self.gradients:
                 gradient.set_contrast_parameters()
 
+ 
     def _build_grid(self, 
             intermittent_saving: bool, 
             start_y: int = 0
@@ -953,8 +995,7 @@ class ShallotGrid:
 
                 # save diagnostic
                 if self.diagnostics:
-                    key = f"{y}, {x}"
-                    self.diagnostics.save_diagnostic(key, fy, disk_radius)
+                    self.diagnostics.save_diagnostic(y, x, fy, disk_radius)
 
             if intermittent_saving:
                 self.save(TEMP_SAVE_DIR, y_value=y)
@@ -962,6 +1003,7 @@ class ShallotGrid:
         self._set_grid_property_contrast_parameters()
         self._delete_temp_save_dir()
 
+ 
     def get_disk_radius(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -993,6 +1035,7 @@ class ShallotGrid:
         
         return disk_radius
 
+ 
     def get_inclination(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -1024,6 +1067,7 @@ class ShallotGrid:
         
         return inclination
 
+ 
     def get_tilt(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -1054,6 +1098,7 @@ class ShallotGrid:
 
         return tilt
 
+ 
     def get_fx_map(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -1085,6 +1130,7 @@ class ShallotGrid:
 
         return fx_map
     
+ 
     def get_fy_map(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -1116,6 +1162,7 @@ class ShallotGrid:
 
         return fy_map
 
+ 
     def diagnose_fxfy_resolution(self) -> None:
         """
         This method generates a diagnosis cube so that one can determine how
@@ -1141,6 +1188,7 @@ class ShallotGrid:
         self.logger.info(f"maximum deviation is {maximum_deviation:.4f} - "
             "explore by plotting")
 
+ 
     def get_diagnostic_map(self, 
             masked: bool = True,
             property_masked: bool = True
@@ -1172,6 +1220,7 @@ class ShallotGrid:
 
         return diagnostic_map
 
+ 
     def _fill_quadrants(self, 
             disk_property: GridProperty, 
             is_tilt: bool = False
@@ -1236,6 +1285,7 @@ class ShallotGrid:
         
         return extended_property
 
+ 
     def _extend_grid(self) -> None:
         """
         This method extends the grid to all four quadrants and extends the dx
@@ -1259,6 +1309,10 @@ class ShallotGrid:
         self.fx_map = self._fill_quadrants(self.fx_map)
         self.fy_map = self._fill_quadrants(self.fy_map)
 
+        if self.diagnostics is not None:
+            self.diagnostics.extend()
+
+ 
     def _determine_disk_gradients(self, positions: np.ndarray) -> None:
         """
         This method finds the local tangent of a scaled-down version of the 
@@ -1305,6 +1359,7 @@ class ShallotGrid:
             self.gradients.append(GridGradient(disk_gradient, 
                 self.parameters, position))
 
+ 
     def _determine_orbital_scale(self) -> float:
         """
         This method is used to set a light curve gradient scale factor that is
@@ -1326,6 +1381,7 @@ class ShallotGrid:
         orbital_scale = limb_darkening_scale * velocity_scale
         return orbital_scale
 
+ 
     def _set_measured_gradients_and_masks(self, 
             light_curve_gradients: np.ndarray,
             light_curve_gradient_errors: np.ndarray = None,
@@ -1392,6 +1448,7 @@ class ShallotGrid:
             gradient.determine_mask(measured_gradient, orbital_scale,
                 transmission_change, measured_error)
 
+ 
     def _reset_gradient_fit(self):
         """
         This method is used to reset the gradient fit after changes are made
@@ -1401,6 +1458,7 @@ class ShallotGrid:
             self.gradient_fit = None
             self.logger.info("gradient fit has been cleared")
 
+ 
     def add_gradients(self, 
             times: np.ndarray, 
             light_curve_gradients: np.ndarray,
@@ -1469,6 +1527,7 @@ class ShallotGrid:
         
         self._reset_gradient_fit()
 
+ 
     def remove_gradients(self, indices: np.ndarray) -> None:
         """
         This method is used to remove gradients from the gradients list.
@@ -1492,6 +1551,7 @@ class ShallotGrid:
 
         self._reset_gradient_fit()
 
+ 
     def set_eclipse_parameters(self,
             eclipse_duration: float,
             transverse_velocity: float,
@@ -1526,6 +1586,7 @@ class ShallotGrid:
                 "eclipse duration")
             self._reset_gradient_fit()
 
+ 
     def update_gradient_scaling(self, 
             transverse_velocity: float = None, 
             limb_darkening: float = None, 
@@ -1612,6 +1673,7 @@ class ShallotGrid:
         
         self._reset_gradient_fit()
         
+ 
     def get_gradients(self,
             masked: bool = False,
             property_masked: bool = True
@@ -1667,6 +1729,7 @@ class ShallotGrid:
 
         return positions, scaled_gradients, measured_errors, disk_gradients
 
+ 
     def determine_gradient_fit(self, weighted: bool = True) -> None:
         """
         This method is used to determine the rms distance between the measured
@@ -1702,6 +1765,7 @@ class ShallotGrid:
             GridPropertyUnit.NONE, data, self.parameters)
         self.gradient_fit.set_mask(np.isnan(data))
 
+ 
     def get_gradient_fit(self,
             masked: bool = True,
             property_masked: bool = True
@@ -1736,6 +1800,7 @@ class ShallotGrid:
 
         return gradient_fit
 
+ 
     def extract_solutions(self, 
             num_solutions: int = None
         ) -> tuple[
@@ -1806,6 +1871,7 @@ class ShallotGrid:
 
         return rms, disk_radius, inclination, tilt, dx, dy
 
+ 
     def generate_hill_radius_mask(self, hill_radius: float) -> None:
         """
         This method masks the disk parameters according to the Hill radius,
@@ -1829,6 +1895,7 @@ class ShallotGrid:
 
         self.disk_radius.set_mask(hill_radius_mask)
 
+ 
     def get_combined_mask(self) -> np.ndarray:
         """
         This method is used to combine all available masks to a single mask
@@ -1854,6 +1921,7 @@ class ShallotGrid:
 
         return combined_mask.astype(bool)
 
+ 
     def determine_closest_grid_point(self, 
             disk_radius: float,  
             inclination: float, 
@@ -1963,6 +2031,7 @@ class ShallotGrid:
 
         return closest_coordinates, closest_indices, minimum_distance
 
+ 
     def get_grid_point_data(self, 
             y_index: int, 
             x_index: int, 
