@@ -464,8 +464,7 @@ class GridGradient(GridProperty):
         scaled_gradient = self.measured_gradient * total_scale
 
         if scaled_gradient > 1:
-            #raise ValueError
-            print("scaled gradient is greater than one, check the"
+            raise ValueError("scaled gradient is greater than one, check the"
                 " measured gradient, orbital scale and transmission change")
 
         return scaled_gradient
@@ -808,9 +807,15 @@ class GridPropertyViewer:
         event : MouseEvent
             This is used to register scroll events.
         """
+        if self.frozen:
+            return
+
+        print(event.button)
+        print(self.index)
+        print(len(self.slice_values) - 1)
         if event.button == "up" and self.index < len(self.slice_values) - 1:
             self.index += 1
-        elif self.index > 0:
+        elif event.button != "up" and self.index > 0:
             self.index -= 1
 
         self.update()
@@ -820,9 +825,6 @@ class GridPropertyViewer:
         """
         This method is used to update the slice of the data cube being viewed.
         """
-        if self.frozen:
-            return
-
         data_slice = np.take(self.data, self.index, self.axis)
         self.image.set_data(data_slice)
         self.plot_coordinates()

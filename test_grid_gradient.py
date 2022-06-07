@@ -103,9 +103,9 @@ def test_determine_mask_defaults(grid_gradient: GridGradient) -> None:
     assert grid_gradient.transmission_change == 1
 
 
-def test_set_mask_invalid(grid_gradient: GridGradient) -> None:
+def test_determine_mask_invalid(grid_gradient: GridGradient) -> None:
     with pytest.raises(ValueError) as ERROR:
-        grid_gradient.determine_mask(2, 2, 0.1)
+        grid_gradient.determine_mask(2, 2, 0.01)
     
     message = ("scaled gradient is greater than one, check the measured "
         "gradient, orbital scale and transmission change")
