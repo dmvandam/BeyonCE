@@ -4,6 +4,8 @@ from GridParameters import GridParameters
 from GridProperty import GridProperty
 from errors import LoadError, InvalidShapeError
 
+from pytest import MonkeyPatch
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import shutil
@@ -182,3 +184,25 @@ def test_load_valid_with_mask(grid_property: GridProperty) -> None:
 
     assert np.all(grid_property.data == grid_property_load.data)
     assert np.all(grid_property.mask == grid_property_load.mask)
+
+
+def test_plot_cube(
+        grid_property: GridProperty, 
+        monkeypatch: MonkeyPatch
+    ) -> None:
+    """unit test that 'handles' plt.show()"""
+    monkeypatch.setattr("matplotlib.pyplot.show", lambda: True)
+    grid_property.plot_cube()
+    assert True
+
+
+def test_plot_slice(grid_property: GridProperty) -> None:
+    """unit test that 'handles' plotting"""
+    ax, image = grid_property.plot_slice(axis=2, index=0)
+    
+    renderer = plt.gcf().canvas.get_renderer()
+    image_shape = image.make_image(renderer, unsampled=True)[0].shape[:-1]
+
+    assert ax.get_title() == ("Disk Radius [$t_{ecl}$] - $R_f$ = 5.0000 - "
+        "horizontal")
+    assert grid_property.data.shape[:-1] == image_shape
